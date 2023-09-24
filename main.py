@@ -1,43 +1,46 @@
-from fastapi import FastAPI
-from pydantic import BaseModel, Field
-from typing_extensions import Optional
+from fastapi import FastAPI, Depends
+from fastapi_users import FastAPIUsers
 
+from auth.auth import auth_backend
+from auth.database import User
+from auth.manager import get_user_manager
+from auth.schemas import UserRead, UserCreate
+
+# создание backend
 app = FastAPI(
     title='Social Network',
     version='1.0'
 )
 
-fake_db = []
+fastapi_users = FastAPIUsers[User, int](
+    get_user_manager,
+    [auth_backend],
+)
+
+# (роутер) login/logout
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth",
+    tags=["auth"],
+)
+
+# (роутер) регистрации
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"],
+)
+
+current_user = fastapi_users.current_user()
 
 
-class User(BaseModel):
-    """Модель для валидации пользователя"""
-    login: str
-    password: str
+@app.get("/profile", tags=["authorized_users"])
+def get_authorized_greeting(user: User = Depends(current_user)):
+    """Эндпоинт для отображения приветствия пользователям с jwt"""
+    return f"Hello, {user.username}"
 
 
-class ResponseUser(BaseModel):
-    """Валидация ответа при регистрации/поиску по username"""
-    status: int = Field(ge=0)
-    data: Optional[User] = None
-
-
-@app.get('/get_userinfo/{u_login}', response_model=ResponseUser)
-def get_user(u_login: str) -> dict:
-    """Поиск пользователя по логину"""
-    filtered_user = tuple(filter(lambda user: user.get('login') == u_login, fake_db))
-    if filtered_user:
-        return {'status': 200, 'data': filtered_user[0]}
-    return {'status': 404}
-
-
-@app.post('/register', response_model=ResponseUser)
-def register_user(send_d: User) -> dict:
-    """Регистрация пользователя в системе"""
-    new_user = {'login': send_d.login, 'password': send_d.password}
-    fake_db.append(new_user)
-    return {'status': -200, 'data': new_user}
-
-# import uvicorn
-# if __name__ == '__main__':
-#     uvicorn.run('main:app')
+@app.get("/default_greeting", tags=["all_users"])
+def unprotected_route():
+    """Маршрут доступный всем пользователям"""
+    return f"Hello, anonym"
