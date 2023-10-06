@@ -17,9 +17,6 @@ app.include_router(
     tags=["Auth"],
 )
 
-if __name__ == '__main__':
-    uvicorn.run('main:app')
-
 # (роутер) регистрации
 app.include_router(
     fastapi_users.get_register_router(UserRead, UserCreate),
@@ -30,3 +27,6 @@ app.include_router(
 # (роутер) для взаимодействия с постами пользователей
 app.include_router(news_router)
 
+
+if __name__ == '__main__':
+    uvicorn.run('main:app', port=8001)
