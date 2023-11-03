@@ -23,6 +23,7 @@ class ResponsePostCreated(BaseModel):
 
 class ResponseGetNews(ResponsePostCreated):
     """Схема получения массива новостей/понравившихся постов"""
+    id: int
     user_id: int
 
 

@@ -30,7 +30,7 @@ class UserManager(IntegerIDMixin, BaseUserManager[user, int]):
             raise InvalidPasswordException(
                 reason="Password should be at least 8 characters"
             )
-        if user.email in password:
+        if person.email in password:
             raise InvalidPasswordException(
                 reason="Password should not contain e-mail"
             )

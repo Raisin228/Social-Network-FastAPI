@@ -3,6 +3,8 @@ from datetime import datetime
 from sqlalchemy import String, Column, Integer, MetaData, TIMESTAMP, ForeignKey, Table
 from sqlalchemy.orm import declarative_base
 
+from auth.models import user
+
 metadata = MetaData()
 Base = declarative_base(metadata=metadata)
 
@@ -17,7 +19,7 @@ news = Table(
     Column('quantity_like', Integer, nullable=False, default=0),
     Column('created_at', TIMESTAMP(timezone=True), default=datetime.utcnow, nullable=False),
     Column('updated_at', TIMESTAMP(timezone=True), nullable=True),
-    Column('user_id', Integer, ForeignKey('user.c.id'), nullable=False)
+    Column('user_id', Integer, ForeignKey(user.id), nullable=False)
 )
 
 # table liked posts in db
@@ -25,6 +27,6 @@ liked_posts = Table(
     'liked_posts',
     metadata,
     Column('id', Integer, primary_key=True, nullable=False),
-    Column('user_id', Integer, ForeignKey('user.c.id'), nullable=False),
+    Column('user_id', Integer, ForeignKey(user.id, ondelete='CASCADE'), nullable=False),
     Column('post_id', Integer, ForeignKey('news.id'), nullable=False)
 )

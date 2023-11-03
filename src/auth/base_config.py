@@ -3,13 +3,14 @@ from fastapi_users.authentication import CookieTransport, AuthenticationBackend
 from fastapi_users.authentication import JWTStrategy
 
 from auth.manager import get_user_manager
-from config import MY_JWT_SECRET
 from auth.models import user
+from config import MY_JWT_SECRET
+
+JWT_SECRET = MY_JWT_SECRET
+
 
 # выбираем транспортную стратегию
 cookie_transport = CookieTransport(cookie_name='Auth-Social-Network', cookie_max_age=3600)
-
-JWT_SECRET = MY_JWT_SECRET
 
 
 def get_jwt_strategy() -> JWTStrategy:
@@ -28,4 +29,3 @@ fastapi_users = FastAPIUsers[user, int](
     get_user_manager,
     [auth_backend],
 )
-

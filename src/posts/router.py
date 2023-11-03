@@ -23,9 +23,13 @@ news_router = APIRouter(
 @news_router.get('/feed', response_model=List[ResponseGetNews],
                  responses={401: {'model': Error400, 'description': 'Unauthorized'}})
 async def get_news(person: user = Depends(current_user),
-                   session: AsyncSession = Depends(get_async_session)) -> list[dict]:
+                   session: AsyncSession = Depends(get_async_session), offset: int = 0) -> list[dict]:
     """Получить ленту новостей"""
-    query = select(news).order_by(desc(news.c.created_at))
+    if offset < 0:
+        offset = 0
+    # используем подзапрос для уменьшения нагрузки на бд
+    subquery = select(news).order_by(desc(news.c.created_at)).offset(offset).limit(5).alias('subquery')
+    query = select(subquery)
     data = await session.execute(query)
     names_columns = list(data.keys())
     # приводим данные ответа в формат описаный в ResponseGetNews
@@ -87,10 +91,10 @@ async def like_chosen_post(news_id: int, person: user = Depends(current_user),
     return {'detail': 'OK'}
 
 
-@news_router.get('/liked_posts', response_model=Union[List[ResponseGetNews], ResponseLikePost],
+@news_router.get('/favorites', response_model=Union[List[ResponseGetNews], ResponseLikePost],
                  responses={401: {'model': Error400, 'description': 'Unauthorized'}})
 async def get_liked_posts(person: user = Depends(current_user),
-                          session: AsyncSession = Depends(get_async_session)) -> dict | list[dict]:
+                          session: AsyncSession = Depends(get_async_session), offset: int = 0) -> dict | list[dict]:
     """Список понравившихся постов"""
     # делаем запрос на получение id понравившихся постов
     query = select(liked_posts).where(liked_posts.c.user_id == person.id)
@@ -100,7 +104,11 @@ async def get_liked_posts(person: user = Depends(current_user),
 
     # делаем запрос на получение постов с такими id если id_liked_posts ~ True
     if id_liked_posts:
-        query2 = select(news).where(news.c.id.in_(id_liked_posts))
+        # используем подзапрос для уменьшения нагрузки на бд
+        subquery = (select(news).where(news.c.id.in_(id_liked_posts)).order_by(desc(news.c.created_at)).offset(offset)
+                    .limit(5).alias('subquery'))
+        query2 = select(subquery)
+        # query2 = select(news).where(news.c.id.in_(id_liked_posts))
         ans = await session.execute(query2)
         names_columns = list(ans.keys())
         result = [dict(zip(names_columns, row)) for row in ans.fetchall()]
