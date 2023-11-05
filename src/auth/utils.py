@@ -15,7 +15,8 @@ async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, user)
 
 
-# слегка изменённая библиотечная функция
+# слегка изменённая библиотечная функция (добавил потому что хочу обрабатывать ситуацию
+# когда пользователь с таки username уже существует в бд)
 def get_register_router(
         get_user_manager: UserManagerDependency[models.UP, models.ID],
         user_schema: Type[schemas.U],

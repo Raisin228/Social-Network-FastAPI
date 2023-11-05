@@ -29,6 +29,7 @@ app.include_router(
 )
 
 
+# (роутер) сброса пароля
 app.include_router(
     fastapi_users.get_reset_password_router(),
     prefix="/auth",

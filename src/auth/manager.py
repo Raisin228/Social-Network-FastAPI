@@ -4,9 +4,10 @@ from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, IntegerIDMixin, InvalidPasswordException
 
 from auth.models import user
-from auth.utils import get_user_db
 from auth.schemas import UserCreate
+from auth.utils import get_user_db
 from config import SECRET_USER_MANAGER
+from tasks.send_email_to_user import send_mail, get_template_email_forgot_pass, after_registered_mail
 
 SECRET = SECRET_USER_MANAGER
 
@@ -18,7 +19,13 @@ class UserManager(IntegerIDMixin, BaseUserManager[user, int]):
 
     async def on_after_register(self, person: user, request: Optional[Request] = None):
         """Логирование (user.id) зарегистрировался в системе"""
+        send_mail(after_registered_mail(person))
         print(f"User {person.id} has registered.")
+
+    async def on_after_forgot_password(self, person: user, token: str, request: Optional[Request] = None):
+        """Пользователь забыл свой пароль и запросил сброс. На почту отправляем token для смены пароля"""
+        send_mail(get_template_email_forgot_pass(person, token))
+        print(f"User id - {person.id} has forgot their password. Reset token: {token}")
 
     async def validate_password(
             self,
