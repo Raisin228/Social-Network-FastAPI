@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "social-network-fastapi"
+version = "0.1.0"
+description = "social-network"
+authors = ["Bogdan <bogdanatrosenko@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["all"], version = "^0.111.1"}
+setuptools = "^71.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
