@@ -9,6 +9,11 @@ readme = "README.md"
 python = "^3.12"
 fastapi = {extras = ["all"], version = "^0.111.1"}
 setuptools = "^71.1.0"
+sqlalchemy = "^2.0.31"
+alembic = "^1.13.2"
+pydantic-settings = "^2.4.0"
+psycopg = "^3.2.1"
+psycopg-binary = "^3.2.1"
 
 
 [build-system]
