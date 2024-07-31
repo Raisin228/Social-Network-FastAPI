@@ -1,13 +1,11 @@
-from sqlalchemy import Table, Column, Integer, String, MetaData
+from sqlalchemy import String
+from sqlalchemy.orm import MappedColumn, Mapped
+from database import Base, int_pk
 
-meta_data = MetaData()
 
-user_table = Table(
-    'user',
-    meta_data,
-    Column('id', Integer, primary_key=True, nullable=False),
-    Column('first_name', String(100), nullable=True),
-    Column('last_name', String(100), nullable=True),
-    Column('username', String(100), nullable=False)
-)
-
+class User(Base):
+    __tablename__ = "user"
+    id: Mapped[int_pk]
+    first_name: Mapped[str | None] = MappedColumn(String(100))
+    last_name: Mapped[str | None] = MappedColumn(String(100))
+    username: Mapped[str] = MappedColumn(String(100), nullable=False, unique=True)

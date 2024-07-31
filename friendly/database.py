@@ -1,32 +1,27 @@
-from sqlalchemy import create_engine, text, insert
-from config import settings
-from friendly.auth.models import meta_data, user_table
+from typing import Annotated
 
-sync_engine = create_engine(
-    url=settings.db_url_psycopg,
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import MappedColumn
+
+from config import settings
+
+async_engine = create_async_engine(
+    url=settings.db_url_asyncpg,
     echo=True,
     pool_size=5,
     max_overflow=10
 )
 
+session_factory = async_sessionmaker(async_engine)
 
-def create_tables():
-    sync_engine.echo = False
-    meta_data.drop_all(sync_engine)
-    meta_data.create_all(sync_engine)
-    sync_engine.echo = True
+int_pk = Annotated[int, MappedColumn(primary_key=True)]
 
 
-def insert_data():
-    with sync_engine.connect() as conn:
-        # запрос через orm
-        stmt = insert(user_table).values([
-            {'first_name': 'Alice',
-             'last_name': 'Jon-con',
-             'username': 'alice_123'
-             }
-        ])
-        # запрос на sql
-        # stmt = """INSERT INTO "user" (first_name, last_name, username) VALUES ('Alice', 'Jon-con', 'alice_123');"""
-        conn.execute(stmt)
-        conn.commit()
+class Base(DeclarativeBase):
+    __abstract__ = True
+
+
+async def get_async_session():
+    async with session_factory() as session:
+        yield session
