@@ -4,7 +4,7 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from config import settings
 from database import Base
-from auth.models import User  # noqa
+from application.auth.models import User  # noqa
 
 from alembic import context
 
