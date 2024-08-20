@@ -21,6 +21,10 @@ int_pk = Annotated[int, MappedColumn(primary_key=True)]
 class Base(DeclarativeBase):
     __abstract__ = True
 
+    def to_dict(self) -> dict:
+        """Преобразование объекта SQLAlchemy в dict"""
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 async def get_async_session() -> AsyncSession:
     async with session_factory() as session:

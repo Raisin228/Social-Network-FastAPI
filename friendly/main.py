@@ -7,8 +7,9 @@ from application.auth.router import router as auth_router
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
-app = FastAPI()
-
+app = FastAPI(
+    contact={'name': 'Bogdan Atroshenko', 'url': 'https://t.me/BogdanAtroshenko', 'email': 'bogdanatrosenko@gmail.com'},
+    title='Friendly')
 
 app.include_router(auth_router)
 

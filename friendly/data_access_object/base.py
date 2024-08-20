@@ -1,5 +1,4 @@
-from sqlalchemy import select, inspect
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import select, inspect, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -16,13 +15,12 @@ class BaseDAO:
     @classmethod
     async def add_one(cls, session: AsyncSession, values: dict):
         """Добавить один объект"""
-        new_instance = cls.model(**values)
-        session.add(new_instance)
-        try:
-            await session.commit()
-        except SQLAlchemyError as e:
-            await session.rollback()
-            raise e
+        stmt = insert(cls.model).values(**values).returning(cls.model.id)
+        result = await session.execute(stmt)
+        await session.commit()
+
+        obj_id = result.scalar_one()
+        new_instance = cls.model(id=obj_id, **values)
         return new_instance
 
     @staticmethod
