@@ -1,4 +1,9 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+
+class GetAccessToken(BaseModel):
+    """Токен доступа"""
+    access_token: str = Field(..., examples=['JWT_token.generated.friendly'], description='some_jwt_token')
 
 
 class GetUser(BaseModel):

@@ -1,3 +1,14 @@
+UNAUTHORIZED = {
+    401: {
+        "description": "Unauthorized",
+        "content": {
+            "application/json": {
+                "example": {"detail": "Authentication is required to access the requested resource"}
+            }
+        }
+    }
+}
+
 CONFLICT = {
     409: {
         "description": "Conflict",

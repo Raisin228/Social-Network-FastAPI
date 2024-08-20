@@ -1,16 +1,9 @@
-from sqlalchemy import select, inspect, insert
+from sqlalchemy import inspect, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class BaseDAO:
     model = None
-
-    @classmethod
-    async def find_all(cls, session: AsyncSession):
-        """Получить все записи"""
-        query = select(cls.model)
-        all_data = await session.execute(query)
-        return all_data.scalars().all()
 
     @classmethod
     async def add_one(cls, session: AsyncSession, values: dict):
