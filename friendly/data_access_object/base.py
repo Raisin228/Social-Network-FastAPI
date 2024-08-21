@@ -1,4 +1,6 @@
-from sqlalchemy import inspect, insert
+from typing import Optional
+
+from sqlalchemy import inspect, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -6,7 +8,14 @@ class BaseDAO:
     model = None
 
     @classmethod
-    async def add_one(cls, session: AsyncSession, values: dict):
+    async def find_one_or_none_by_id(cls, session: AsyncSession, identifier: int) -> Optional[model]:
+        """Получить одну запись по ID"""
+        query = select(cls.model).where(cls.model.id == identifier)
+        data = await session.execute(query)
+        return data.scalars().one_or_none()
+
+    @classmethod
+    async def add_one(cls, session: AsyncSession, values: dict) -> model:
         """Добавить один объект"""
         stmt = insert(cls.model).values(**values).returning(cls.model.id)
         result = await session.execute(stmt)

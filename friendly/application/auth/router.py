@@ -1,14 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi import Response
 
+from application.auth.constants import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
 from application.auth.dao import UserDao
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from application.core.responses import CONFLICT, UNAUTHORIZED
-from auth.auth import authenticate_user, create_access_token
+from application.auth.dependensies import get_current_user_refresh_token, get_current_user_access_token
+from application.auth.models import User
+from application.core.responses import CONFLICT, UNAUTHORIZED, FORBIDDEN
+from auth.auth import authenticate_user, create_jwt_token
 from auth.hashing_password import hash_password
 from database import get_async_session
-from application.auth.schemas import UserRegister, GetUser, GetAccessToken
+from application.auth.schemas import UserRegister, GetUser, TokensInfo, AccessTokenInfo
 from application.auth.request_body import UserRegistrationData
 
 router = APIRouter(prefix='/auth', tags=['Auth'])
@@ -18,7 +20,8 @@ router = APIRouter(prefix='/auth', tags=['Auth'])
 async def register_user(user_data: UserRegistrationData, session: AsyncSession = Depends(get_async_session)):
     """Регистрация пользователя по логину и паролю"""
     login = {'login': user_data.login}
-    if await UserDao.find_one_or_none(session, login):
+    if r := await UserDao.find_one_or_none(session, login):
+        print(r)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='User with that login already exist')
 
     user_data = dict(user_data)
@@ -32,14 +35,27 @@ async def register_user(user_data: UserRegistrationData, session: AsyncSession =
     return response
 
 
-@router.post('/login', summary='Log in to system', response_model=GetAccessToken, responses=UNAUTHORIZED)
-async def login_user(user_data: UserRegistrationData, response: Response):
+@router.post('/login', summary='Log in to system', response_model=TokensInfo, responses=UNAUTHORIZED)
+async def login_user(user_data: UserRegistrationData):
     """Вход в систему, получение JWT токена и запись его в cookies"""
     user = await authenticate_user(**user_data.dict())
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid login or password')
 
-    data_for_payload = {'id': user['id']}
-    access_token = create_access_token(data_for_payload)
-    response.set_cookie(key='auth-tokens', value=access_token, max_age=31_536_000, httponly=True)
-    return {'access_token': access_token}
+    data_for_payload = {'user_id': user['id']}
+    access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
+    refresh_token = create_jwt_token(data_for_payload, REFRESH_TOKEN_TYPE)
+    return TokensInfo(access_token=access_token, refresh_token=refresh_token)
+
+
+@router.post('/refresh_access_token', response_model=AccessTokenInfo, responses=UNAUTHORIZED | FORBIDDEN)
+async def refresh_jwt(user: User = Depends(get_current_user_refresh_token)):
+    """Получить новый токен доступа"""
+    data_for_payload = {'user_id': user.id}
+    access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
+    return AccessTokenInfo(access_token=access_token)
+
+
+@router.get('/secure')
+def secure(user: User = Depends(get_current_user_access_token)):
+    return user
