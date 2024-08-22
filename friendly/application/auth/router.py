@@ -19,10 +19,9 @@ router = APIRouter(prefix='/auth', tags=['Auth'])
 @router.post('/registration', summary='Register new user', response_model=UserRegister, responses=CONFLICT)
 async def register_user(user_data: UserRegistrationData, session: AsyncSession = Depends(get_async_session)):
     """Регистрация пользователя по логину и паролю"""
-    login = {'login': user_data.login}
-    if r := await UserDao.find_one_or_none(session, login):
-        print(r)
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='User with that login already exist')
+    email = {'email': user_data.email}
+    if await UserDao.find_by_filter(session, email):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail='User with that email already exist')
 
     user_data = dict(user_data)
     user_data['password'] = hash_password(user_data['password'])
@@ -40,7 +39,7 @@ async def login_user(user_data: UserRegistrationData):
     """Вход в систему, получение JWT токена и запись его в cookies"""
     user = await authenticate_user(**user_data.dict())
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid login or password')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid email or password')
 
     data_for_payload = {'user_id': user['id']}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
@@ -51,7 +50,7 @@ async def login_user(user_data: UserRegistrationData):
 @router.post('/refresh_access_token', response_model=AccessTokenInfo, responses=UNAUTHORIZED | FORBIDDEN)
 async def refresh_jwt(user: User = Depends(get_current_user_refresh_token)):
     """Получить новый токен доступа"""
-    data_for_payload = {'user_id': user.id}
+    data_for_payload = {'user_id': user['id']}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
     return AccessTokenInfo(access_token=access_token)
 

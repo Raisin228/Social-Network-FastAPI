@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 
 class AccessTokenInfo(BaseModel):
@@ -17,7 +17,7 @@ class GetUser(BaseModel):
     id: int
     first_name: str | None
     last_name: str | None
-    login: str
+    email: EmailStr
 
 
 class UserRegister(BaseModel):

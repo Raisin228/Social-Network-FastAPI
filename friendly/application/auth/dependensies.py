@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.auth.constants import TOKEN_TYPE_FIELD, ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
 from application.auth.dao import UserDao
-from application.auth.models import User
 from auth.auth import decode_jwt
 from database import get_async_session
 
@@ -24,13 +23,13 @@ def checkup_token(req_token_type: str, identity) -> dict | Exception:
     return data
 
 
-async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> User | None | Exception:
+async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> dict | None | Exception:
     """Достать пользователя из бд по user_id из payload"""
     user_id = token_payload.get('user_id')
     if not user_id:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Can't find a sub in the jwt token")
 
-    user = await UserDao.find_one_or_none_by_id(session, int(user_id))
+    user = await UserDao.find_by_filter(session, {'id': int(user_id)})
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
     return user
@@ -38,8 +37,9 @@ async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> User
 
 def get_auth_user(token_type: str):
     """Получение пользователя на основе JWT"""
+
     async def get_user_from_token_type(credentials: HTTPAuthorizationCredentials = Depends(security),
-                                       session: AsyncSession = Depends(get_async_session)) -> User | None | Exception:
+                                       session: AsyncSession = Depends(get_async_session)) -> dict | None | Exception:
         payload = checkup_token(token_type, credentials)
 
         user = await get_user_by_sub_id(payload, session)

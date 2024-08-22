@@ -13,6 +13,7 @@ auth_data = settings.auth_data
 
 
 def create_jwt_token(data: dict, token_type: str) -> str:
+    """Создание токена"""
     payload = data.copy()
 
     if token_type == REFRESH_TOKEN_TYPE:
@@ -42,10 +43,10 @@ def decode_jwt(token: str) -> dict | Exception:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token invalid!')
 
 
-async def authenticate_user(login: str, password: str) -> dict | None:
+async def authenticate_user(email: str, password: str) -> dict | None:
     """Существует ли пользователь в системе"""
     async with session_factory() as session:
-        user = await UserDao.find_one_or_none(session, {'login': login})
+        user = await UserDao.find_by_filter(session, {'email': email})
     if user is None or not verify_password(password, user['password']):
         return None
     return user
