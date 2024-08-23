@@ -48,7 +48,7 @@ async def login_user(user_data: UserRegistrationData):
 
 
 @router.post('/refresh_access_token', response_model=AccessTokenInfo, responses=UNAUTHORIZED | FORBIDDEN)
-async def refresh_jwt(user: User = Depends(get_current_user_refresh_token)):
+async def refresh_jwt(user: dict = Depends(get_current_user_refresh_token)):
     """Получить новый токен доступа"""
     data_for_payload = {'user_id': user['id']}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)

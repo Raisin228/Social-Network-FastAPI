@@ -1,3 +1,15 @@
+SUCCESS = {
+    200: {
+            "description": "OK",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "successful request"}
+                }
+            }
+        }
+}
+
+
 UNAUTHORIZED = {
     401: {
         "description": "Unauthorized",

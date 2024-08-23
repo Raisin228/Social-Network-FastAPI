@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.12"
-fastapi = {extras = ["all"], version = "^0.111.1"}
+fastapi = { extras = ["all"], version = "^0.111.1" }
 setuptools = "^71.1.0"
 sqlalchemy = "^2.0.31"
 alembic = "^1.13.2"
@@ -15,11 +15,24 @@ pydantic-settings = "^2.4.0"
 psycopg = "^3.2.1"
 psycopg-binary = "^3.2.1"
 asyncpg = "^0.29.0"
-passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 python-jose = "^3.3.0"
 bcrypt = "4.0.1"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.2"
+pytest-asyncio = "^0.24.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+    ".", "friendly",
+]
+
+asyncio_mode = "auto"
+
+[pytest]
+filterwarnings = "ignore::pytest.PytestCollectionWarning"

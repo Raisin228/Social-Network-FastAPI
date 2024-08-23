@@ -11,12 +11,19 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
+    TEST_DB_NAME: str = ""
     SECRET_KEY: str
     ALGORITHM: str
 
     @property
     def db_url_asyncpg(self):
+        """DSN основной базы данных"""
         return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
+
+    @property
+    def db_url_for_test(self):
+        """DSN тестовой базы данных"""
+        return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.TEST_DB_NAME}'
 
     @property
     def auth_data(self):
