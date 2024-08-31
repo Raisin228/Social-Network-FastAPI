@@ -1,14 +1,13 @@
 SUCCESS = {
     200: {
-            "description": "OK",
-            "content": {
-                "application/json": {
-                    "example": {"detail": "successful request"}
-                }
+        "description": "OK",
+        "content": {
+            "application/json": {
+                "example": {"detail": "successful request"}
             }
         }
+    }
 }
-
 
 UNAUTHORIZED = {
     401: {
@@ -40,6 +39,16 @@ CONFLICT = {
         "content": {
             "application/json": {
                 "example": {"detail": "Cannot be executed due to conflicting resource access"}
+            }
+        }
+    }
+}
+
+UNPROCESSABLE_ENTITY = {
+    422: {
+        "description": "Unprocessable Entity",
+        "content": {
+            "application/json": {"example": {"detail": [{"loc": ["string", 0], "msg": "string", "type": "string"}]}
             }
         }
     }

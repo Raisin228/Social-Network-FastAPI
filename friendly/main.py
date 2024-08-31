@@ -11,12 +11,6 @@ app = FastAPI(
     contact={'name': 'Bogdan Atroshenko', 'url': 'https://t.me/BogdanAtroshenko', 'email': 'bogdanatrosenko@gmail.com'},
     title='Friendly🫂')
 
-
-@app.get('/')
-def main_page():
-    return {"msg": "Hello World"}
-
-
 app.include_router(auth_router)
 
 if __name__ == "__main__":

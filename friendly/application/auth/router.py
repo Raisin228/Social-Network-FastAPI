@@ -35,9 +35,9 @@ async def register_user(user_data: UserRegistrationData, session: AsyncSession =
 
 
 @router.post('/login', summary='Log in to system', response_model=TokensInfo, responses=UNAUTHORIZED)
-async def login_user(user_data: UserRegistrationData):
+async def login_user(user_data: UserRegistrationData, session: AsyncSession = Depends(get_async_session)):
     """Вход в систему, получение JWT токена и запись его в cookies"""
-    user = await authenticate_user(**user_data.dict())
+    user = await authenticate_user(**user_data.model_dump(), session=session)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid email or password')
 

@@ -1,4 +1,4 @@
-from sqlalchemy import inspect, insert, select
+from sqlalchemy import inspect, insert, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -29,6 +29,13 @@ class BaseDAO:
         obj_id = result.scalar_one()
         new_instance = cls.model(id=obj_id, **values)
         return new_instance
+
+    @classmethod
+    async def delete_by_filter(cls, session: AsyncSession, find_by: dict) -> None:
+        """Удалить все записи, удовлетворяющие условиям фильтрации"""
+        stmt = delete(cls.model).filter_by(**find_by)
+        await session.execute(stmt)
+        await session.commit()
 
     @staticmethod
     def object_to_dict(obj) -> dict | None:

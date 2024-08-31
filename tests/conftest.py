@@ -1,3 +1,4 @@
+import asyncio
 from typing import AsyncGenerator
 
 import pytest
