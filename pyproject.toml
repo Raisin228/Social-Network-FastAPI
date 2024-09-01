@@ -32,8 +32,6 @@ build-backend = "poetry.core.masonry.api"
 pythonpath = [
     ".", "friendly",
 ]
-
 asyncio_mode = "auto"
-
-[pytest]
-filterwarnings = "ignore::pytest.PytestCollectionWarning"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = "ignore::Warning"

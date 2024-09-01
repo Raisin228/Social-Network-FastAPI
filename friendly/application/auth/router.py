@@ -44,7 +44,7 @@ async def login_user(user_data: UserRegistrationData, session: AsyncSession = De
     data_for_payload = {'user_id': user['id']}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
     refresh_token = create_jwt_token(data_for_payload, REFRESH_TOKEN_TYPE)
-    return TokensInfo(access_token=access_token, refresh_token=refresh_token)
+    return TokensInfo(access_token=access_token, refresh_token=refresh_token, token_type='Bearer')
 
 
 @router.post('/refresh_access_token', response_model=AccessTokenInfo, responses=UNAUTHORIZED | FORBIDDEN)
@@ -52,7 +52,7 @@ async def refresh_jwt(user: dict = Depends(get_current_user_refresh_token)):
     """Получить новый токен доступа"""
     data_for_payload = {'user_id': user['id']}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
-    return AccessTokenInfo(access_token=access_token)
+    return AccessTokenInfo(access_token=access_token, token_type='Bearer')
 
 
 @router.get('/secure')

@@ -1,19 +1,16 @@
-import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.auth.dao import UserDao
 from application.auth.schemas import TokensInfo
-from application.core.responses import SUCCESS, UNAUTHORIZED
+from application.core.responses import SUCCESS, UNAUTHORIZED, UNPROCESSABLE_ENTITY
 from auth.conftest import user_data
 
 
-@pytest.mark.asyncio(loop_scope='session')
 async def test_login_exist_user_with_correct_email_and_pass(_create_standard_user, ac: AsyncClient,
                                                             session: AsyncSession):
     """Пользователь существует в системе и пытается сделать вход"""
     response = await ac.post('/auth/login', json=user_data)
-
     assert response.status_code == list(SUCCESS.keys())[0]
     assert TokensInfo.model_validate(response.json())
 
@@ -21,22 +18,32 @@ async def test_login_exist_user_with_correct_email_and_pass(_create_standard_use
     assert user['first_name'] is None
     assert user['last_name'] is None
 
-    await UserDao.delete_by_filter(session, {'id': user['id']})
 
-
-@pytest.mark.asyncio(loop_scope='session')
 async def test_login_by_non_existent_account(ac: AsyncClient, session: AsyncSession):
     """Вход в несуществующий аккаунт"""
-    # user_record = await UserDao.find_by_filter(session, {'email': user_data['email']})
-    # print(user_record)
     incorrect_data = {
         'email': 'imagine_mail@yandex.ru',
         'password': 'strong_but_useless_pass'
     }
     response = await ac.post('/auth/login', json=incorrect_data)
-
     assert response.status_code == list(UNAUTHORIZED.keys())[0]
     assert response.json() == {'detail': 'Invalid email or password'}
 
     user_record = await UserDao.find_by_filter(session, {'email': incorrect_data['email']})
+    assert user_record is None
+
+
+async def test_login_user_invalid_input_data(ac: AsyncClient, session: AsyncSession):
+    """Не валидные данные для входа (неправильная почта и короткий пароль)"""
+    incorrect_user_data = {
+        'email': 'incorrect_mail',
+        'password': '123'
+    }
+    response = await ac.post('/auth/login', json=incorrect_user_data)
+    assert response.status_code == list(UNPROCESSABLE_ENTITY.keys())[0]
+    error_detail = response.json().get('detail', [])
+    assert any(error['loc'] == ['body', 'email'] for error in error_detail)
+    assert any(error['loc'] == ['body', 'password'] for error in error_detail)
+
+    user_record = await UserDao.find_by_filter(session, {'email': 'incorrect_mail'})
     assert user_record is None

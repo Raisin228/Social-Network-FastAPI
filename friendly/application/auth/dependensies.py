@@ -11,10 +11,8 @@ security = HTTPBearer()
 
 
 def checkup_token(req_token_type: str, identity) -> dict | Exception:
-    """Есть ли токен в запросе и соответствует ли он типу"""
+    """Соответствует ли токен типу"""
     token = identity.credentials
-    if not token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Token not found')
     data = decode_jwt(token)
     type_from_jwt = data.get(TOKEN_TYPE_FIELD)
     if type_from_jwt is None or type_from_jwt != req_token_type:
@@ -27,7 +25,7 @@ async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> dict
     """Достать пользователя из бд по user_id из payload"""
     user_id = token_payload.get('user_id')
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Can't find a sub in the jwt token")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Can't find a <user_id> in the jwt token")
 
     user = await UserDao.find_by_filter(session, {'id': int(user_id)})
     if user is None:

@@ -5,7 +5,9 @@ from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 class AccessTokenInfo(BaseModel):
     access_token: str = Field(examples=['JWT_token.generated.friendly'], description='some_access_token')
-    token_type: str = Field(examples=['Bearer'], default='Bearer')
+    token_type: Literal['Bearer'] = Field(examples=['Bearer'])
+
+    model_config = ConfigDict(extra='forbid')
 
 
 class TokensInfo(AccessTokenInfo):

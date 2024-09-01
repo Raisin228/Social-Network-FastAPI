@@ -1,4 +1,3 @@
-from calendar import timegm
 from datetime import datetime, timezone, timedelta
 
 from fastapi import HTTPException, status
@@ -9,7 +8,6 @@ from application.auth.constants import REFRESH_TOKEN_TYPE, ACCESS_TOKEN_TYPE, TO
 from application.auth.dao import UserDao
 from .hashing_password import verify_password
 from config import settings
-from database import session_factory
 
 auth_data = settings.auth_data
 
