@@ -1,4 +1,4 @@
-from sqlalchemy import inspect, insert, select, delete
+from sqlalchemy import delete, insert, inspect, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

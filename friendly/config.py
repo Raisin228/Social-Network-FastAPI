@@ -18,16 +18,16 @@ class Settings(BaseSettings):
     @property
     def db_url_asyncpg(self):
         """DSN основной базы данных"""
-        return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}'
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     @property
     def db_url_for_test(self):
         """DSN тестовой базы данных"""
-        return f'postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.TEST_DB_NAME}'
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.TEST_DB_NAME}"
 
     @property
     def auth_data(self):
-        return {'secret_key': self.SECRET_KEY, 'algorithm': self.ALGORITHM}
+        return {"secret_key": self.SECRET_KEY, "algorithm": self.ALGORITHM}
 
     model_config = SettingsConfigDict(env_file=DOTENV)
 

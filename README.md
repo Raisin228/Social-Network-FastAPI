@@ -5,7 +5,10 @@ taskkill /PID <PID> /F - завершаем его
 Запуск тестов -> `poetry run pytest tests/`  
 Проверка кода на покрытие тестами -> `poetry run pytest --cov .`  
 Преобразовать файлик .coverage в удобочитаемый отчёт -> `coverage html`
-#78%
+---  
+Запуск pre-commit
+`pre-commit run -a`
+    
 
 
 

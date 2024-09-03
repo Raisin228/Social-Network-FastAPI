@@ -1,6 +1,6 @@
-from sqlalchemy import String
-from sqlalchemy.orm import MappedColumn, Mapped
 from database import Base, int_pk
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, MappedColumn
 
 
 class User(Base):

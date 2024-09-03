@@ -1,11 +1,14 @@
-from fastapi import HTTPException, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from application.auth.constants import TOKEN_TYPE_FIELD, ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
+from application.auth.constants import (
+    ACCESS_TOKEN_TYPE,
+    REFRESH_TOKEN_TYPE,
+    TOKEN_TYPE_FIELD,
+)
 from application.auth.dao import UserDao
 from auth.auth import decode_jwt
 from database import get_async_session
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.ext.asyncio import AsyncSession
 
 security = HTTPBearer()
 
@@ -16,28 +19,35 @@ def checkup_token(req_token_type: str, identity) -> dict | Exception:
     data = decode_jwt(token)
     type_from_jwt = data.get(TOKEN_TYPE_FIELD)
     if type_from_jwt is None or type_from_jwt != req_token_type:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail=f"Expected '{req_token_type}' get '{type_from_jwt}'")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Expected '{req_token_type}' get '{type_from_jwt}'",
+        )
     return data
 
 
 async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> dict | None | Exception:
     """Достать пользователя из бд по user_id из payload"""
-    user_id = token_payload.get('user_id')
+    user_id = token_payload.get("user_id")
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Can't find a <user_id> in the jwt token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Can't find a <user_id> in the jwt token",
+        )
 
-    user = await UserDao.find_by_filter(session, {'id': int(user_id)})
+    user = await UserDao.find_by_filter(session, {"id": int(user_id)})
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='User not found')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
 
 
 def get_auth_user(token_type: str):
     """Получение пользователя на основе JWT"""
 
-    async def get_user_from_token_type(credentials: HTTPAuthorizationCredentials = Depends(security),
-                                       session: AsyncSession = Depends(get_async_session)) -> dict | None | Exception:
+    async def get_user_from_token_type(
+        credentials: HTTPAuthorizationCredentials = Depends(security),
+        session: AsyncSession = Depends(get_async_session),
+    ) -> dict | None | Exception:
         payload = checkup_token(token_type, credentials)
 
         user = await get_user_by_sub_id(payload, session)
