@@ -4,6 +4,7 @@ from application.auth.constants import (
     TOKEN_TYPE_FIELD,
 )
 from application.auth.dao import UserDao
+from application.auth.schemas import GetUser
 from auth.auth import decode_jwt
 from database import get_async_session
 from fastapi import Depends, HTTPException, status
@@ -26,7 +27,7 @@ def checkup_token(req_token_type: str, identity) -> dict | Exception:
     return data
 
 
-async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> dict | None | Exception:
+async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> GetUser | None | Exception:
     """Достать пользователя из бд по user_id из payload"""
     user_id = token_payload.get("user_id")
     if not user_id:
@@ -35,10 +36,10 @@ async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> dict
             detail="Can't find a <user_id> in the jwt token",
         )
 
-    user = await UserDao.find_by_filter(session, {"id": int(user_id)})
-    if user is None:
+    data = await UserDao.find_by_filter(session, {"id": int(user_id)})
+    if data is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-    return user
+    return GetUser.model_validate(data)
 
 
 def get_auth_user(token_type: str):

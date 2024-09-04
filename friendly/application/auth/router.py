@@ -1,10 +1,6 @@
 from application.auth.constants import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
 from application.auth.dao import UserDao
-from application.auth.dependensies import (
-    get_current_user_access_token,
-    get_current_user_refresh_token,
-)
-from application.auth.models import User
+from application.auth.dependensies import get_current_user_refresh_token
 from application.auth.request_body import UserRegistrationData
 from application.auth.schemas import AccessTokenInfo, GetUser, TokensInfo, UserRegister
 from application.core.responses import CONFLICT, FORBIDDEN, UNAUTHORIZED
@@ -63,13 +59,8 @@ async def login_user(user_data: UserRegistrationData, session: AsyncSession = De
     response_model=AccessTokenInfo,
     responses=UNAUTHORIZED | FORBIDDEN,
 )
-async def refresh_jwt(user: dict = Depends(get_current_user_refresh_token)):
+async def refresh_jwt(user: GetUser = Depends(get_current_user_refresh_token)):
     """Получить новый токен доступа"""
-    data_for_payload = {"user_id": user["id"]}
+    data_for_payload = {"user_id": user.id}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
     return AccessTokenInfo(access_token=access_token, token_type="Bearer")
-
-
-@router.get("/secure")
-def secure(user: User = Depends(get_current_user_access_token)):
-    return user

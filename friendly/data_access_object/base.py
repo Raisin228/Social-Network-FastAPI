@@ -1,4 +1,4 @@
-from sqlalchemy import delete, insert, inspect, select
+from sqlalchemy import delete, insert, inspect, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -27,8 +27,21 @@ class BaseDAO:
         await session.commit()
 
         obj_id = result.scalar_one()
-        new_instance = cls.model(id=obj_id, **values)
-        return new_instance
+        return cls.model(id=obj_id, **values)
+
+    @classmethod
+    async def update_row(cls, session: AsyncSession, new_data: dict, filter_parameters: dict):
+        """Выбрать запис(ь|и) и обновить поля"""
+        data_without_none = {key: value for key, value in new_data.items() if value is not None}
+        if len(data_without_none) > 0:
+            stmt = (
+                update(cls.model).values(**dict(data_without_none)).filter_by().returning(*cls.model.__table__.columns)
+            )
+            temp = await session.execute(stmt)
+            await session.commit()
+            return temp.fetchall()
+
+        return await cls.find_by_filter(session, filter_parameters)
 
     @classmethod
     async def delete_by_filter(cls, session: AsyncSession, find_by: dict) -> None:
