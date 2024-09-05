@@ -2,7 +2,7 @@ from application.auth.dao import UserDao
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
 from application.auth.schemas import GetUser
-from application.core.responses import FORBIDDEN, UNAUTHORIZED
+from application.core.responses import FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from application.profile.schemas import AdditionalProfileInfo
 from database import get_async_session
 from fastapi import APIRouter, Depends
@@ -16,17 +16,15 @@ async def user_profile(user: User = Depends(get_current_user_access_token)):
     return user
 
 
-@router.patch("/profile", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED)
+@router.patch("/profile", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED | NOT_FOUND)
 async def change_profile(
     addition_info: AdditionalProfileInfo,
     user: User = Depends(get_current_user_access_token),
     session=Depends(get_async_session),
-):
+) -> dict:
     """Изменить информацию в своём профиле"""
     data_aft_update = await UserDao.update_row(session, dict(addition_info), {"id": user.id})
 
+    element = data_aft_update[0]
     columns = [column.name for column in User.__table__.columns]
-    if type(data_aft_update) == list:
-        element = data_aft_update[0]
-        return dict(zip(columns, element))
-    return data_aft_update
+    return dict(zip(columns, element))

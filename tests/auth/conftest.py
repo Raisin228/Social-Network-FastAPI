@@ -1,4 +1,5 @@
 import asyncio
+import uuid
 
 import pytest
 from application.auth.constants import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
@@ -8,6 +9,7 @@ from auth.hashing_password import hash_password
 from sqlalchemy.ext.asyncio import AsyncSession
 
 user_data = {
+    "id": str(uuid.uuid4()),
     "email": "testuser@example.com",
     "password": "very_strong_user_password123",
 }
@@ -18,7 +20,7 @@ async def _create_standard_user(session: AsyncSession):
     """Создание пользователя перед тестом и удаления после теста."""
     new_user = await UserDao.add_one(
         session,
-        {"email": user_data["email"], "password": hash_password(user_data["password"])},
+        {"id": user_data["id"], "email": user_data["email"], "password": hash_password(user_data["password"])},
     )
     yield new_user
     await UserDao.delete_by_filter(session, {"id": new_user.id})

@@ -14,6 +14,17 @@ UNAUTHORIZED = {
     }
 }
 
+NOT_FOUND = {
+    404: {
+        "description": "Not Found",
+        "content": {
+            "application/json": {
+                "example": {"detail": "The requested resource could not be found but may be available in the future."}
+            }
+        },
+    }
+}
+
 FORBIDDEN = {
     403: {
         "description": "Forbidden",

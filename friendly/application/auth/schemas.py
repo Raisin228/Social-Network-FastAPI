@@ -1,3 +1,4 @@
+import uuid
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -23,7 +24,7 @@ class TokensInfo(AccessTokenInfo):
 class GetUser(BaseModel):
     """Данные пользователя"""
 
-    id: int
+    id: uuid.UUID
     first_name: str | None = Field(examples=["Jason"], description="User's name")
     last_name: str | None = Field(examples=["Bourne"], description="User's surname")
     email: EmailStr = Field(examples=["JasonBourne@gmail.com"], description="User's electronic mail")

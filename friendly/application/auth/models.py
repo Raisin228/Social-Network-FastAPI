@@ -1,12 +1,19 @@
-from database import Base, int_pk
+import datetime
+import uuid
+
+from database import Base
 from sqlalchemy import String
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, MappedColumn
 
 
 class User(Base):
     __tablename__ = "user"
-    id: Mapped[int_pk]
+    id: Mapped[uuid.UUID] = MappedColumn(UUID(as_uuid=True), primary_key=True)
     first_name: Mapped[str | None] = MappedColumn(String(32))
     last_name: Mapped[str | None] = MappedColumn(String(32))
+    birthday: Mapped[datetime.datetime | None]
+    sex: Mapped[str | None] = MappedColumn(String(5))
+    nickname: Mapped[str] = MappedColumn(String(39), nullable=False, unique=True)
     email: Mapped[str] = MappedColumn(String(100), nullable=False, unique=True)
     password: Mapped[str] = MappedColumn(String(100), nullable=False)

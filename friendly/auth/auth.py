@@ -19,7 +19,6 @@ auth_data = settings.auth_data
 def create_jwt_token(data: dict, token_type: str) -> str:
     """Создание токена"""
     payload = data.copy()
-
     if token_type == REFRESH_TOKEN_TYPE:
         exp_time = timedelta(days=30)
     elif token_type == ACCESS_TOKEN_TYPE:

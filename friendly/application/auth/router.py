@@ -1,3 +1,5 @@
+import uuid
+
 from application.auth.constants import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
 from application.auth.dao import UserDao
 from application.auth.dependensies import get_current_user_refresh_token
@@ -29,6 +31,9 @@ async def register_user(user_data: UserRegistrationData, session: AsyncSession =
         )
 
     user_data = dict(user_data)
+    temp = uuid.uuid4()
+    user_data["id"] = temp
+    user_data["nickname"] = f"id_{temp}"
     user_data["password"] = hash_password(user_data["password"])
     result = await UserDao.add_one(session, user_data)
 
@@ -48,7 +53,7 @@ async def login_user(user_data: UserRegistrationData, session: AsyncSession = De
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    data_for_payload = {"user_id": user["id"]}
+    data_for_payload = {"user_id": str(user["id"])}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
     refresh_token = create_jwt_token(data_for_payload, REFRESH_TOKEN_TYPE)
     return TokensInfo(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
@@ -61,6 +66,6 @@ async def login_user(user_data: UserRegistrationData, session: AsyncSession = De
 )
 async def refresh_jwt(user: GetUser = Depends(get_current_user_refresh_token)):
     """Получить новый токен доступа"""
-    data_for_payload = {"user_id": user.id}
+    data_for_payload = {"user_id": str(user.id)}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
     return AccessTokenInfo(access_token=access_token, token_type="Bearer")

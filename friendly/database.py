@@ -1,14 +1,12 @@
-from typing import Annotated, AsyncGenerator
+from typing import AsyncGenerator
 
 from config import settings
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, MappedColumn
+from sqlalchemy.orm import DeclarativeBase
 
 async_engine = create_async_engine(url=settings.db_url_asyncpg, echo=False, pool_size=5, max_overflow=10)
 
 session_factory = async_sessionmaker(async_engine)
-
-int_pk = Annotated[int, MappedColumn(primary_key=True)]
 
 
 class Base(DeclarativeBase):
