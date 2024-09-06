@@ -1,13 +1,15 @@
+import uuid
+
 from application.auth.schemas import AccessTokenInfo
 from application.core.responses import FORBIDDEN, SUCCESS, UNAUTHORIZED
 from auth.conftest import get_refresh_token
 from httpx import AsyncClient
 
-EXPIRED_REFRESH_TOKEN = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-    "eyJ1c2VyX2lkIjo1LCJ0b2tlbl90eXBlIjoicmVmcmVzaF90b2tlbiIsImlzcyI6ImZyaWVuZGx5IiwiZXh"
-    "wIjoxNzI1MTk0NDQxLCJpYXQiOjE3MjUxNjUwMzR9.qYKkN5Z7La0GkDnBEGUs16UE5ew0AuZPszW0vXZgWAM"
-)
+EXPIRED_REFRESH_TOKEN = """
+    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYzRhNTRkMWEtNGI3YS00ZDQ4LTkzMWEtYmEwOTg4YjM4OW
+    ZjIiwidG9rZW5fdHlwZSI6InJlZnJlc2hfdG9rZW4iLCJpc3MiOiJmcmllbmRseSIsImV4cCI6MTcyNTE5NDQ0MSwiaWF0IjoxN
+    zI1MTY1MDM0fQ.sMoNhrSd7242jHcE9G_aUcr2iST0P6E1BZLBdQrS_l8
+    """
 
 
 async def test_refresh_token_without_authorization(ac: AsyncClient):
@@ -27,7 +29,7 @@ async def test_refresh_token_with_provide_access_token_instead_refresh(get_acces
     assert response.json() == {"detail": "Expected 'refresh_token' get 'access_token'"}
 
 
-async def test_refresh_access_token_with_expired_access_token(ac: AsyncClient):
+async def test_refresh_access_token_with_expired_refresh_token(ac: AsyncClient):
     """Обновить access token по устаревшему refresh token.
     При использовании вместо refresh access результат такой же"""
     response = await ac.post(
@@ -62,7 +64,7 @@ async def test_refresh_token_for_user_that_dont_exist(ac: AsyncClient):
     """Получить токен доступа для пользователя, которого не существует в системе"""
     response = await ac.post(
         "/auth/refresh_access_token",
-        headers={"Authorization": f"Bearer {get_refresh_token(user_id=-100)}"},
+        headers={"Authorization": f"Bearer {get_refresh_token(user_id=uuid.uuid4())}"},
     )
     assert response.status_code == list(UNAUTHORIZED.keys())[0]
     assert response.json() == {"detail": "User not found"}

@@ -1,30 +1,44 @@
-from application.auth.dao import UserDao
+import sqlalchemy.exc
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
 from application.auth.schemas import GetUser
-from application.core.responses import FORBIDDEN, NOT_FOUND, UNAUTHORIZED
-from application.profile.schemas import AdditionalProfileInfo
+from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
+from application.profile.dao import ProfileDao
+from application.profile.request_body import AdditionalProfileInfo
+from application.profile.schemas import AccountDeleted
 from database import get_async_session
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from starlette import status
 
 router = APIRouter(prefix="/profile", tags=["User Profile"])
 
 
-@router.get("/profile", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED)
+@router.get("/get_information", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED)
 async def user_profile(user: User = Depends(get_current_user_access_token)):
     """Получить информацию о своём профиле"""
     return user
 
 
-@router.patch("/profile", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED | NOT_FOUND)
+@router.patch(
+    "/update_information", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED | NOT_FOUND | BAD_REQUEST
+)
 async def change_profile(
     addition_info: AdditionalProfileInfo,
     user: User = Depends(get_current_user_access_token),
     session=Depends(get_async_session),
 ) -> dict:
     """Изменить информацию в своём профиле"""
-    data_aft_update = await UserDao.update_row(session, dict(addition_info), {"id": user.id})
+    try:
+        data_aft_update = await ProfileDao.update_row(session, dict(addition_info), {"id": str(user.id)})
+        element = data_aft_update[0]
+        columns = [column.name for column in User.__table__.columns]
+        return dict(zip(columns, element))
+    except sqlalchemy.exc.IntegrityError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user with this nickname already exists")
 
-    element = data_aft_update[0]
-    columns = [column.name for column in User.__table__.columns]
-    return dict(zip(columns, element))
+
+@router.delete("/delete_account", response_model=AccountDeleted, responses=FORBIDDEN | UNAUTHORIZED)
+async def delete_profile(user: User = Depends(get_current_user_access_token), session=Depends(get_async_session)):
+    """Удалить свою учётную запись"""
+    deleted_account = await ProfileDao.delete_by_filter(session, {"id": str(user.id)})
+    return AccountDeleted(deleted_account_info=deleted_account)

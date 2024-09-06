@@ -36,7 +36,7 @@ async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> GetU
             detail="Can't find a <user_id> in the jwt token",
         )
 
-    data = await UserDao.find_by_filter(session, {"id": int(user_id)})
+    data = await UserDao.find_by_filter(session, {"id": str(user_id)})
     if data is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return GetUser.model_validate(data)

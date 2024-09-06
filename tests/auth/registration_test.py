@@ -1,33 +1,38 @@
+from uuid import UUID
+
 from application.auth.dao import UserDao
 from application.auth.schemas import UserRegister
 from application.core.responses import CONFLICT, SUCCESS, UNPROCESSABLE_ENTITY
-from auth.conftest import user_data
+from auth.conftest import USER_DATA
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def test_register_uniq_user(ac: AsyncClient, session: AsyncSession):
     """Регистрация аккаунта на почту, которая ещё не использовалась в системе"""
-    response = await ac.post("/auth/registration", json=user_data)
+    response = await ac.post("/auth/registration", json=USER_DATA)
     assert response.status_code == list(SUCCESS.keys())[0]
     assert UserRegister.model_validate(response.json())
 
-    user_record = await UserDao.find_by_filter(session, {"email": user_data["email"]})
-    assert user_record["email"] == user_data["email"]
+    user_record = await UserDao.find_by_filter(session, {"email": USER_DATA["email"]})
+    assert user_record["email"] == USER_DATA["email"]
     assert user_record["first_name"] is None
     assert user_record["last_name"] is None
+    assert user_record["birthday"] is None
+    assert user_record["sex"] is None
+    assert user_record["nickname"] == f'id_{user_record["id"]}'
     await UserDao.delete_by_filter(session, {"id": user_record["id"]})
 
 
 async def test_register_user_occupied_email(_create_standard_user, ac: AsyncClient, session: AsyncSession):
     """Регистрация пользователя на уже занятую почту"""
-    response = await ac.post("/auth/registration", json=user_data)
+    response = await ac.post("/auth/registration", json=USER_DATA)
     assert response.status_code == list(CONFLICT.keys())[0]
     assert response.json() == {"detail": "User with that email already exist"}
 
-    user_record = await UserDao.find_by_filter(session, {"email": user_data["email"]})
-    assert isinstance(user_record["id"], int)
-    assert user_record["email"] == user_data["email"]
+    user_record = await UserDao.find_by_filter(session, {"email": USER_DATA["email"]})
+    assert isinstance(user_record["id"], UUID)
+    assert user_record["email"] == USER_DATA["email"]
     assert user_record["first_name"] is None
     assert user_record["last_name"] is None
 

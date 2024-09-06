@@ -12,7 +12,7 @@ class User(Base):
     id: Mapped[uuid.UUID] = MappedColumn(UUID(as_uuid=True), primary_key=True)
     first_name: Mapped[str | None] = MappedColumn(String(32))
     last_name: Mapped[str | None] = MappedColumn(String(32))
-    birthday: Mapped[datetime.datetime | None]
+    birthday: Mapped[datetime.date | None]
     sex: Mapped[str | None] = MappedColumn(String(5))
     nickname: Mapped[str] = MappedColumn(String(39), nullable=False, unique=True)
     email: Mapped[str] = MappedColumn(String(100), nullable=False, unique=True)

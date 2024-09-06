@@ -49,11 +49,13 @@ class BaseDAO:
         return temp.fetchall()
 
     @classmethod
-    async def delete_by_filter(cls, session: AsyncSession, find_by: dict) -> None:
+    async def delete_by_filter(cls, session: AsyncSession, find_by: dict):
         """Удалить все записи, удовлетворяющие условиям фильтрации"""
-        stmt = delete(cls.model).filter_by(**find_by)
-        await session.execute(stmt)
+        stmt = delete(cls.model).filter_by(**find_by).returning(*cls.model.__table__.columns)
+        result = await session.execute(stmt)
         await session.commit()
+
+        return result.fetchall()
 
     @staticmethod
     def object_to_dict(obj) -> dict | None:

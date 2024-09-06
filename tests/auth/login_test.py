@@ -1,7 +1,7 @@
 from application.auth.dao import UserDao
 from application.auth.schemas import TokensInfo
 from application.core.responses import SUCCESS, UNAUTHORIZED, UNPROCESSABLE_ENTITY
-from auth.conftest import user_data
+from auth.conftest import USER_DATA
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -10,13 +10,16 @@ async def test_login_exist_user_with_correct_email_and_pass(
     _create_standard_user, ac: AsyncClient, session: AsyncSession
 ):
     """Пользователь существует в системе и пытается сделать вход"""
-    response = await ac.post("/auth/login", json=user_data)
+    response = await ac.post("/auth/login", json=USER_DATA)
     assert response.status_code == list(SUCCESS.keys())[0]
     assert TokensInfo.model_validate(response.json())
 
-    user = await UserDao.find_by_filter(session, {"email": user_data["email"]})
+    user = await UserDao.find_by_filter(session, {"email": USER_DATA["email"]})
     assert user["first_name"] is None
     assert user["last_name"] is None
+    assert user["birthday"] is None
+    assert user["sex"] is None
+    assert user["nickname"] == f'id_{user["id"]}'
 
 
 async def test_login_by_non_existent_account(ac: AsyncClient, session: AsyncSession):

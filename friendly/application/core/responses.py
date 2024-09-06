@@ -5,6 +5,17 @@ SUCCESS = {
     }
 }
 
+BAD_REQUEST = {
+    400: {
+        "description": "Bad Request",
+        "content": {
+            "application/json": {
+                "example": {"detail": "the server detected a syntactic/logical error in the client's request"}
+            }
+        },
+    }
+}
+
 UNAUTHORIZED = {
     401: {
         "description": "Unauthorized",

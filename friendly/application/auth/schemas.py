@@ -1,6 +1,7 @@
 import uuid
 from typing import Literal
 
+from application.profile.request_body import AdditionalProfileInfo
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
@@ -21,13 +22,11 @@ class TokensInfo(AccessTokenInfo):
     model_config = ConfigDict(extra="forbid")
 
 
-class GetUser(BaseModel):
+class GetUser(AdditionalProfileInfo):
     """Данные пользователя"""
 
     id: uuid.UUID
-    first_name: str | None = Field(examples=["Jason"], description="User's name")
-    last_name: str | None = Field(examples=["Bourne"], description="User's surname")
-    email: EmailStr = Field(examples=["JasonBourne@gmail.com"], description="User's electronic mail")
+    email: EmailStr = Field(examples=["JasonBorne@gmail.com"], description="User's electronic mail")
 
 
 class UserRegister(BaseModel):
