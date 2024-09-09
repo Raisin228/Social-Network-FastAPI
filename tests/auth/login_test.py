@@ -1,9 +1,9 @@
 from application.auth.dao import UserDao
 from application.auth.schemas import TokensInfo
 from application.core.responses import SUCCESS, UNAUTHORIZED, UNPROCESSABLE_ENTITY
-from auth.conftest import USER_DATA
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from utils import USER_DATA
 
 
 async def test_login_exist_user_with_correct_email_and_pass(

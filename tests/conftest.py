@@ -1,11 +1,15 @@
+import asyncio
 from typing import AsyncGenerator
 
 import pytest
+from application.auth.dao import UserDao
+from auth.hashing_password import hash_password
 from config import settings
 from database import Base, get_async_session
 from httpx import ASGITransport, AsyncClient
 from main import app
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from utils import UNIQ_ID, USER_DATA, get_acs_token
 
 test_async_engine = create_async_engine(url=settings.db_url_for_test, echo=False, pool_size=5, max_overflow=10)
 
@@ -44,3 +48,33 @@ async def prepare_database():
     yield
     async with test_async_engine.begin() as connection:
         await connection.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create and provide a new event loop per test."""
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="function")
+async def _create_standard_user(session: AsyncSession):
+    """Создание пользователя перед тестом и удаления после теста. Фикстура"""
+    new_user = await UserDao.add_one(
+        session,
+        {
+            "id": UNIQ_ID,
+            "nickname": f"id_{UNIQ_ID}",
+            "email": USER_DATA["email"],
+            "password": hash_password(USER_DATA["password"]),
+        },
+    )
+    yield new_user
+    await UserDao.delete_by_filter(session, {"id": new_user.id})
+
+
+@pytest.fixture(scope="function")
+async def get_access_token():
+    """Получить access токен для конкретного user. Фикстура"""
+    return get_acs_token()

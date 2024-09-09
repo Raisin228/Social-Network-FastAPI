@@ -31,7 +31,7 @@ async def change_profile(
     try:
         data_aft_update = await ProfileDao.update_row(session, dict(addition_info), {"id": str(user.id)})
         element = data_aft_update[0]
-        columns = [column.name for column in User.__table__.columns]
+        columns = [column for column in User.get_column_names()]
         return dict(zip(columns, element))
     except sqlalchemy.exc.IntegrityError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user with this nickname already exists")
@@ -41,4 +41,8 @@ async def change_profile(
 async def delete_profile(user: User = Depends(get_current_user_access_token), session=Depends(get_async_session)):
     """Удалить свою учётную запись"""
     deleted_account = await ProfileDao.delete_by_filter(session, {"id": str(user.id)})
-    return AccountDeleted(deleted_account_info=deleted_account)
+    deleted_account = deleted_account[0]
+
+    columns = [column for column in User.get_column_names()]
+    deleted_account = dict(zip(columns, deleted_account))
+    return AccountDeleted(deleted_account_info=GetUser.model_validate(deleted_account))

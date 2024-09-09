@@ -2,8 +2,8 @@ import uuid
 
 from application.auth.schemas import AccessTokenInfo
 from application.core.responses import FORBIDDEN, SUCCESS, UNAUTHORIZED
-from auth.conftest import get_refresh_token
 from httpx import AsyncClient
+from utils import get_refresh_token
 
 EXPIRED_REFRESH_TOKEN = """
     eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYzRhNTRkMWEtNGI3YS00ZDQ4LTkzMWEtYmEwOTg4YjM4OW

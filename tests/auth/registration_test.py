@@ -3,9 +3,9 @@ from uuid import UUID
 from application.auth.dao import UserDao
 from application.auth.schemas import UserRegister
 from application.core.responses import CONFLICT, SUCCESS, UNPROCESSABLE_ENTITY
-from auth.conftest import USER_DATA
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+from utils import USER_DATA
 
 
 async def test_register_uniq_user(ac: AsyncClient, session: AsyncSession):

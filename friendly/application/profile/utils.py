@@ -6,7 +6,9 @@ def check_single_alphabet(value: str | None) -> None | tuple[str, str]:
     if value is None:
         return None
     without_spaces = value.split()
-    first_char_script = get_script(value[0])
+    if len(value.strip()) == 0:
+        raise ValueError("the string must contain at least one character other than a space")
+    first_char_script = get_script(value.strip()[0])
     for word in without_spaces:
         if any(map(lambda char: char.isalpha() and get_script(char) != first_char_script, word)):
             raise ValueError("all fields must be filled in the same language")

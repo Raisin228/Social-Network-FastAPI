@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 from database import Base
-from sqlalchemy import String
+from sqlalchemy import String, inspect
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, MappedColumn
 
@@ -17,3 +17,8 @@ class User(Base):
     nickname: Mapped[str] = MappedColumn(String(39), nullable=False, unique=True)
     email: Mapped[str] = MappedColumn(String(100), nullable=False, unique=True)
     password: Mapped[str] = MappedColumn(String(100), nullable=False)
+
+    @classmethod
+    def get_column_names(cls) -> list[str]:
+        """Получить названия всех столбцов"""
+        return [column.name for column in inspect(cls).c]
