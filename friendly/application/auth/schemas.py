@@ -22,11 +22,24 @@ class TokensInfo(AccessTokenInfo):
     model_config = ConfigDict(extra="forbid")
 
 
-class GetUser(AdditionalProfileInfo):
-    """Данные пользователя"""
+class BasicUserFields(BaseModel):
+    """Основные поля пользовательского аккаунта"""
 
     id: uuid.UUID
     email: EmailStr = Field(examples=["JasonBorne@gmail.com"], description="User's electronic mail")
+
+
+class GetUser(BasicUserFields, AdditionalProfileInfo):
+    """Все данные пользователя"""
+
+    ...
+
+
+class UserUpdatePassword(BaseModel):
+    """После смены пароля"""
+
+    msg: Literal["User's password successfully updated"] = Field(default="User's password successfully updated")
+    detail: BasicUserFields
 
 
 class UserRegister(BaseModel):

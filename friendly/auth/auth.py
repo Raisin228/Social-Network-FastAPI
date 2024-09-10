@@ -5,13 +5,9 @@ from application.auth.constants import (
     REFRESH_TOKEN_TYPE,
     TOKEN_TYPE_FIELD,
 )
-from application.auth.dao import UserDao
 from config import settings
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from .hashing_password import verify_password
 
 auth_data = settings.auth_data
 
@@ -46,11 +42,3 @@ def decode_jwt(token: str) -> dict | Exception:
     except JWTError as e:
         print(e)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalid!")
-
-
-async def authenticate_user(email: str, password: str, session: AsyncSession) -> dict | None:
-    """Существует ли пользователь в системе"""
-    user = await UserDao.find_by_filter(session, {"email": email})
-    if user is None or not verify_password(password, user["password"]):
-        return None
-    return user

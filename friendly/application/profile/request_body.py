@@ -48,7 +48,7 @@ class AdditionalProfileInfo(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def __is_valid_name_and_last_name(cls, values: dict):
+    def __is_valid_name_and_last_name(cls, values: dict) -> dict:
         f_name: str | None = values.get("first_name")
         l_name: str | None = values.get("last_name")
         nick = values.get("nickname")

@@ -2,11 +2,22 @@ import uuid
 
 from application.auth.constants import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
 from application.auth.dao import UserDao
-from application.auth.dependensies import get_current_user_refresh_token
-from application.auth.request_body import UserRegistrationData
-from application.auth.schemas import AccessTokenInfo, GetUser, TokensInfo, UserRegister
+from application.auth.dependensies import (
+    get_current_user_access_token,
+    get_current_user_refresh_token,
+)
+from application.auth.models import User
+from application.auth.request_body import ModifyPassword, UserRegistrationData
+from application.auth.schemas import (
+    AccessTokenInfo,
+    BasicUserFields,
+    GetUser,
+    TokensInfo,
+    UserRegister,
+    UserUpdatePassword,
+)
 from application.core.responses import CONFLICT, FORBIDDEN, UNAUTHORIZED
-from auth.auth import authenticate_user, create_jwt_token
+from auth.auth import create_jwt_token
 from auth.hashing_password import hash_password
 from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -49,7 +60,7 @@ async def register_user(user_data: UserRegistrationData, session: AsyncSession =
 )
 async def login_user(user_data: UserRegistrationData, session: AsyncSession = Depends(get_async_session)):
     """Вход в систему, получение JWT токена и запись его в cookies"""
-    user = await authenticate_user(**user_data.model_dump(), session=session)
+    user = await UserDao.authenticate_user(**user_data.model_dump(), session=session)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
@@ -69,3 +80,21 @@ async def refresh_jwt(user: GetUser = Depends(get_current_user_refresh_token)):
     data_for_payload = {"user_id": str(user.id)}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
     return AccessTokenInfo(access_token=access_token, token_type="Bearer")
+
+
+@router.post("/change_password", response_model=UserUpdatePassword, responses=FORBIDDEN | UNAUTHORIZED)
+async def change_account_password(
+    inform: ModifyPassword,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(get_current_user_access_token),
+):
+    """Сменить пароль от аккаунта. При условии что ты помнишь текущий пароль"""
+    is_valid = await UserDao.authenticate_user(user.email, inform.current_password, session)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="the password from the current_password field does not match your account password",
+        )
+
+    await UserDao.update_row(session, {"password": hash_password(inform.new_password)}, {"id": user.id})
+    return UserUpdatePassword(detail=BasicUserFields(**{"id": user.id, "email": user.email}))
