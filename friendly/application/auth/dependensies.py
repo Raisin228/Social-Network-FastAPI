@@ -1,6 +1,7 @@
 from application.auth.constants import (
     ACCESS_TOKEN_TYPE,
     REFRESH_TOKEN_TYPE,
+    RESET_PASSWORD_TOKEN_TYPE,
     TOKEN_TYPE_FIELD,
 )
 from application.auth.dao import UserDao
@@ -59,3 +60,4 @@ def get_auth_user(token_type: str):
 
 get_current_user_access_token = get_auth_user(ACCESS_TOKEN_TYPE)
 get_current_user_refresh_token = get_auth_user(REFRESH_TOKEN_TYPE)
+get_current_user_reset_password_token = get_auth_user(RESET_PASSWORD_TOKEN_TYPE)

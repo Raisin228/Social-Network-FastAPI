@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     TEST_DB_NAME: str = ""
     SECRET_KEY: str
     ALGORITHM: str
+    FRONTEND_URL: str
 
     @property
     def db_url_asyncpg(self):

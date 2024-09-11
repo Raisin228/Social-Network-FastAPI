@@ -1,24 +1,36 @@
 import uuid
 
-from application.auth.constants import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
+from application.auth.constants import (
+    ACCESS_TOKEN_TYPE,
+    REFRESH_TOKEN_TYPE,
+    RESET_PASSWORD_TOKEN_TYPE,
+)
 from application.auth.dao import UserDao
 from application.auth.dependensies import (
     get_current_user_access_token,
     get_current_user_refresh_token,
+    get_current_user_reset_password_token,
 )
 from application.auth.models import User
-from application.auth.request_body import ModifyPassword, UserRegistrationData
+from application.auth.request_body import (
+    Email,
+    ModifyPassword,
+    NewPassword,
+    UserRegistrationData,
+)
 from application.auth.schemas import (
     AccessTokenInfo,
     BasicUserFields,
     GetUser,
+    ResetPasswordByEmail,
     TokensInfo,
     UserRegister,
     UserUpdatePassword,
 )
-from application.core.responses import CONFLICT, FORBIDDEN, UNAUTHORIZED
+from application.core.responses import CONFLICT, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from auth.auth import create_jwt_token
 from auth.hashing_password import hash_password
+from config import settings
 from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -88,7 +100,7 @@ async def change_account_password(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(get_current_user_access_token),
 ):
-    """Сменить пароль от аккаунта. При условии что ты помнишь текущий пароль"""
+    """Сменить пароль от аккаунта. При условии что пользователь помнит текущий пароль"""
     is_valid = await UserDao.authenticate_user(user.email, inform.current_password, session)
     if not is_valid:
         raise HTTPException(
@@ -98,3 +110,35 @@ async def change_account_password(
 
     await UserDao.update_row(session, {"password": hash_password(inform.new_password)}, {"id": user.id})
     return UserUpdatePassword(detail=BasicUserFields(**{"id": user.id, "email": user.email}))
+
+
+@router.post("/single_link_to_password_reset", response_model=ResetPasswordByEmail, responses=NOT_FOUND)
+async def request_token_to_reset_password(reset_mail: Email, session: AsyncSession = Depends(get_async_session)):
+    """Забыл пароль? Получить короткоживущую ссылку (на почту) с токеном [для сброса пароля]"""
+    user = await UserDao.find_by_filter(session, {"email": reset_mail.email})
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"User with '{reset_mail.email}' email address doesn't exist"
+        )
+
+    reset_token = create_jwt_token({"user_id": str(user["id"])}, token_type=RESET_PASSWORD_TOKEN_TYPE)
+    single_link = f"{settings.FRONTEND_URL}reset_password?reset_token={reset_token}"
+    print(single_link)
+
+    # TODO
+    # сделать отправку одноразовой ссылки на почту
+    return ResetPasswordByEmail(**{"email": reset_mail.email})
+
+
+@router.patch("/replace_existent_password", response_model=UserUpdatePassword, responses=UNAUTHORIZED | FORBIDDEN)
+async def change_password_by_provided_token(
+    data: NewPassword,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(get_current_user_reset_password_token),
+):
+    """Изменить пароль пользователя через токен из ссылки"""
+    updated_profile = await UserDao.update_row(
+        session, {"password": hash_password(data.new_password)}, {"id": str(user.id)}
+    )
+    return UserUpdatePassword(**{"id": str(updated_profile[0].id), "email": updated_profile[0].email})

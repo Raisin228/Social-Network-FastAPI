@@ -1,8 +1,9 @@
 import uuid
 from typing import Literal
 
+from application.auth.request_body import Email
 from application.profile.request_body import AdditionalProfileInfo
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AccessTokenInfo(BaseModel):
@@ -22,11 +23,10 @@ class TokensInfo(AccessTokenInfo):
     model_config = ConfigDict(extra="forbid")
 
 
-class BasicUserFields(BaseModel):
+class BasicUserFields(Email):
     """Основные поля пользовательского аккаунта"""
 
     id: uuid.UUID
-    email: EmailStr = Field(examples=["JasonBorne@gmail.com"], description="User's electronic mail")
 
 
 class GetUser(BasicUserFields, AdditionalProfileInfo):
@@ -35,11 +35,10 @@ class GetUser(BasicUserFields, AdditionalProfileInfo):
     ...
 
 
-class UserUpdatePassword(BaseModel):
+class UserUpdatePassword(BasicUserFields):
     """После смены пароля"""
 
     msg: Literal["User's password successfully updated"] = Field(default="User's password successfully updated")
-    detail: BasicUserFields
 
 
 class UserRegister(BaseModel):
@@ -49,3 +48,9 @@ class UserRegister(BaseModel):
     detail: GetUser
 
     model_config = ConfigDict(from_attributes=True, extra="forbid")
+
+
+class ResetPasswordByEmail(Email):
+    """Был выполнен запрос на получение ссылки для сброса пароля"""
+
+    msg: Literal["The email has been sent successfully"] = Field(default="The email has been sent successfully")
