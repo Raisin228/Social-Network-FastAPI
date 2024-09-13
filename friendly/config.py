@@ -12,9 +12,16 @@ class Settings(BaseSettings):
     DB_PASS: str
     DB_NAME: str
     TEST_DB_NAME: str = ""
+
     SECRET_KEY: str
     ALGORITHM: str
+
     FRONTEND_URL: str
+
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_PORT: int
+    MAIL_SERVER: str
 
     @property
     def db_url_asyncpg(self):

@@ -24,7 +24,6 @@ from application.auth.schemas import (
     GetUser,
     ResetPasswordByEmail,
     TokensInfo,
-    UserRegister,
     UserUpdatePassword,
 )
 from application.core.responses import CONFLICT, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
@@ -33,6 +32,7 @@ from auth.hashing_password import hash_password
 from config import settings
 from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException, status
+from mail.mail_sender import send_welcome_mail
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -41,7 +41,6 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 @router.post(
     "/registration",
     summary="Register new user",
-    response_model=UserRegister,
     responses=CONFLICT,
 )
 async def register_user(user_data: UserRegistrationData, session: AsyncSession = Depends(get_async_session)):
@@ -58,10 +57,15 @@ async def register_user(user_data: UserRegistrationData, session: AsyncSession =
     user_data["id"] = temp
     user_data["nickname"] = f"id_{temp}"
     user_data["password"] = hash_password(user_data["password"])
-    result = await UserDao.add_one(session, user_data)
+    # result = await UserDao.add_one(session, user_data)
 
-    response = UserRegister(msg="Account successfully created", detail=GetUser(**result.to_dict()))
-    return response
+    # TODO
+    # сделать отправку письма на почту после регистрации аккаунта пользователя
+    await send_welcome_mail(user_data["email"], {"user_email": 123, "user_nick": 21312})
+
+    # response = UserRegister(msg="Account successfully created", detail=GetUser(**result.to_dict()))
+
+    # return response
 
 
 @router.post(
