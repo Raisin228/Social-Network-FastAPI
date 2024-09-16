@@ -24,6 +24,7 @@ from application.auth.schemas import (
     GetUser,
     ResetPasswordByEmail,
     TokensInfo,
+    UserRegister,
     UserUpdatePassword,
 )
 from application.core.responses import CONFLICT, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
@@ -31,18 +32,14 @@ from auth.auth import create_jwt_token
 from auth.hashing_password import hash_password
 from config import settings
 from database import get_async_session
-from fastapi import APIRouter, Depends, HTTPException, status
-from mail.mail_sender import send_welcome_mail
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from mail.mail_sender import send_mail
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-@router.post(
-    "/registration",
-    summary="Register new user",
-    responses=CONFLICT,
-)
+@router.post("/registration", summary="Register new user", responses=CONFLICT, response_model=UserRegister)
 async def register_user(user_data: UserRegistrationData, session: AsyncSession = Depends(get_async_session)):
     """Регистрация пользователя по логину и паролю"""
     email = {"email": user_data.email}
@@ -57,15 +54,19 @@ async def register_user(user_data: UserRegistrationData, session: AsyncSession =
     user_data["id"] = temp
     user_data["nickname"] = f"id_{temp}"
     user_data["password"] = hash_password(user_data["password"])
-    # result = await UserDao.add_one(session, user_data)
+    result = await UserDao.add_one(session, user_data)
+    response = UserRegister(msg="Account successfully created", detail=GetUser(**result.to_dict()))
 
     # TODO
-    # сделать отправку письма на почту после регистрации аккаунта пользователя
-    await send_welcome_mail(user_data["email"], {"user_email": 123, "user_nick": 21312})
+    # сделать отправку почты либо через background task либо через celery
 
-    # response = UserRegister(msg="Account successfully created", detail=GetUser(**result.to_dict()))
-
-    # return response
+    await send_mail(
+        user_data["email"],
+        {"user_email": result.email, "user_nick": result.nickname},
+        "Registration was successful",
+        "welcome.html",
+    )
+    return response
 
 
 @router.post(
@@ -117,7 +118,9 @@ async def change_account_password(
 
 
 @router.post("/single_link_to_password_reset", response_model=ResetPasswordByEmail, responses=NOT_FOUND)
-async def request_token_to_reset_password(reset_mail: Email, session: AsyncSession = Depends(get_async_session)):
+async def request_token_to_reset_password(
+    reset_mail: Email, request: Request, session: AsyncSession = Depends(get_async_session)
+):
     """Забыл пароль? Получить короткоживущую ссылку (на почту) с токеном [для сброса пароля]"""
     user = await UserDao.find_by_filter(session, {"email": reset_mail.email})
 
@@ -128,10 +131,21 @@ async def request_token_to_reset_password(reset_mail: Email, session: AsyncSessi
 
     reset_token = create_jwt_token({"user_id": str(user["id"])}, token_type=RESET_PASSWORD_TOKEN_TYPE)
     single_link = f"{settings.FRONTEND_URL}reset_password?reset_token={reset_token}"
-    print(single_link)
 
     # TODO
-    # сделать отправку одноразовой ссылки на почту
+    # сделать отправку почты либо через background task либо через celery
+
+    await send_mail(
+        reset_mail.email,
+        {
+            "user_nick": user["nickname"],
+            "user_email": reset_mail.email,
+            "browser_name": request.headers.get("user-agent"),
+            "action_url": single_link,
+        },
+        "Password reset request",
+        "reset_password.html",
+    )
     return ResetPasswordByEmail(**{"email": reset_mail.email})
 
 

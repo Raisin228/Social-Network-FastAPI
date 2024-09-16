@@ -21,7 +21,7 @@ def create_jwt_token(data: dict, token_type: str) -> str:
     elif token_type == ACCESS_TOKEN_TYPE:
         exp_time = timedelta(days=30, hours=24)
     elif token_type == RESET_PASSWORD_TOKEN_TYPE:
-        exp_time = timedelta(hours=1, minutes=20)
+        exp_time = timedelta(hours=1)
     else:
         raise ValueError("Incorrect jwt token type")
     expire = datetime.now(timezone.utc) + exp_time
