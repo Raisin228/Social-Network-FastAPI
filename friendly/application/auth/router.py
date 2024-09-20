@@ -1,3 +1,4 @@
+import secrets
 import uuid
 
 from application.auth.constants import (
@@ -22,6 +23,7 @@ from application.auth.schemas import (
     AccessTokenInfo,
     BasicUserFields,
     GetUser,
+    RedirectUserGoogleAuth,
     ResetPasswordByEmail,
     TokensInfo,
     UserRegister,
@@ -29,12 +31,15 @@ from application.auth.schemas import (
 )
 from application.core.responses import CONFLICT, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from auth.auth import create_jwt_token
+from auth.google_oauth import oauth
 from auth.hashing_password import hash_password
+from authlib.integrations.base_client import OAuthError
 from config import settings
 from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from mail.mail_sender import send_mail
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse, RedirectResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -160,3 +165,48 @@ async def change_password_by_provided_token(
         session, {"password": hash_password(data.new_password)}, {"id": str(user.id)}
     )
     return UserUpdatePassword(**{"id": str(updated_profile[0].id), "email": updated_profile[0].email})
+
+
+@router.get("/login/via_google", response_model=RedirectUserGoogleAuth, status_code=302)
+async def login_google(request: Request):
+    """Перенаправление на авторизационный сервер Google для входа в Friendly"""
+    request_from_swagger = request.headers.get("referer", "")
+    if request_from_swagger and request_from_swagger.endswith("/docs"):
+        return JSONResponse(status_code=302, content=RedirectUserGoogleAuth().dict())
+
+    # Генерация безопасного nonce (одноразовый криптографический ключ)
+    nonce = secrets.token_urlsafe(16)
+    request.session["nonce"] = nonce
+    redirect_uri = request.url_for("callback")
+    return await oauth.google.authorize_redirect(request, redirect_uri, nonce=nonce)
+
+
+@router.get("/callback/google", name="callback")
+async def auth(request: Request, session: AsyncSession = Depends(get_async_session)):
+    try:
+        access_token = await oauth.google.authorize_access_token(request)
+    except OAuthError:
+        return RedirectResponse(url="/")
+
+    nonce = request.session.get("nonce")
+    user_data = await oauth.google.parse_id_token(nonce=nonce, token=access_token)
+    del request.session["nonce"]
+
+    is_user_exist = await UserDao.find_by_filter(session, {"email": user_data.get("email")})
+    if is_user_exist is None:
+        new_user = dict()
+        temp = uuid.uuid4()
+        new_user["id"] = temp
+        new_user["nickname"] = f"id_{temp}"
+        new_user["email"] = user_data.get("email")
+        new_user["first_name"] = user_data.get("given_name")
+        new_user["last_name"] = user_data.get("family_name")
+        new_user["password"] = ""
+        result = await UserDao.add_one(session, new_user)
+        print(result)
+        # нужно выдать токены access_token и refresh_token
+    else:
+        # сразу же выдать токены доступа
+        ...
+
+    return RedirectResponse(url="/")

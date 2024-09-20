@@ -1,5 +1,6 @@
 import os
 
+from pydantic import constr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 DOTENV = os.path.join(os.path.dirname(__file__), "../.env")
@@ -22,6 +23,10 @@ class Settings(BaseSettings):
     MAIL_PASSWORD: str
     MAIL_PORT: int
     MAIL_SERVER: str
+
+    GOOGLE_CLIENT_ID: constr(min_length=5)
+    GOOGLE_CLIENT_SECRET: constr(min_length=5)
+    SESSION_SECRET_KEY: constr(min_length=5)
 
     @property
     def db_url_asyncpg(self):

@@ -5,6 +5,13 @@ SUCCESS = {
     }
 }
 
+FOUND = {
+    302: {
+        "description": "Redirects to Google OAuth login page",
+        "content": {"application/json": {"example": {"detail": "successful request"}}},
+    }
+}
+
 BAD_REQUEST = {
     400: {
         "description": "Bad Request",
