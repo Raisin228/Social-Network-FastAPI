@@ -23,6 +23,5 @@ app.include_router(auth_router)
 app.include_router(profile_router)
 app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET_KEY)
 
-
 if __name__ == "__main__":
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

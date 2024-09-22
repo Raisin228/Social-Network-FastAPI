@@ -1,11 +1,7 @@
 import secrets
 import uuid
 
-from application.auth.constants import (
-    ACCESS_TOKEN_TYPE,
-    REFRESH_TOKEN_TYPE,
-    RESET_PASSWORD_TOKEN_TYPE,
-)
+from application.auth.constants import ACCESS_TOKEN_TYPE, RESET_PASSWORD_TOKEN_TYPE
 from application.auth.dao import UserDao
 from application.auth.dependensies import (
     get_current_user_access_token,
@@ -29,17 +25,23 @@ from application.auth.schemas import (
     UserRegister,
     UserUpdatePassword,
 )
-from application.core.responses import CONFLICT, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
+from application.auth.utils import generate_tokens_pair
+from application.core.responses import (
+    BAD_REQUEST,
+    CONFLICT,
+    FORBIDDEN,
+    NOT_FOUND,
+    UNAUTHORIZED,
+)
 from auth.auth import create_jwt_token
-from auth.google_oauth import oauth
+from auth.google_oauth import get_data_from_authorize_token, oauth
 from auth.hashing_password import hash_password
-from authlib.integrations.base_client import OAuthError
 from config import settings
 from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from mail.mail_sender import send_mail
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import JSONResponse, RedirectResponse
+from starlette.responses import JSONResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -86,10 +88,7 @@ async def login_user(user_data: UserRegistrationData, session: AsyncSession = De
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    data_for_payload = {"user_id": str(user["id"])}
-    access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
-    refresh_token = create_jwt_token(data_for_payload, REFRESH_TOKEN_TYPE)
-    return TokensInfo(access_token=access_token, refresh_token=refresh_token, token_type="Bearer")
+    return generate_tokens_pair({"user_id": str(user["id"])})
 
 
 @router.post(
@@ -169,7 +168,10 @@ async def change_password_by_provided_token(
 
 @router.get("/login/via_google", response_model=RedirectUserGoogleAuth, status_code=302)
 async def login_google(request: Request):
-    """Перенаправление на авторизационный сервер Google для входа в Friendly"""
+    """Перенаправление на авторизационный сервер Google для [входа | регистрации] Friendly
+
+    **Note:** redirect_uri=http://127.0.0.1:8000/auth/callback/google
+    """
     request_from_swagger = request.headers.get("referer", "")
     if request_from_swagger and request_from_swagger.endswith("/docs"):
         return JSONResponse(status_code=302, content=RedirectUserGoogleAuth().dict())
@@ -178,35 +180,31 @@ async def login_google(request: Request):
     nonce = secrets.token_urlsafe(16)
     request.session["nonce"] = nonce
     redirect_uri = request.url_for("callback")
-    return await oauth.google.authorize_redirect(request, redirect_uri, nonce=nonce)
+    return await oauth.google.authorize_redirect(request, redirect_uri, nonce=nonce, prompt="consent")
 
 
-@router.get("/callback/google", name="callback")
+@router.get(
+    "/callback/google", name="callback", response_model=TokensInfo, responses=BAD_REQUEST, include_in_schema=False
+)
 async def auth(request: Request, session: AsyncSession = Depends(get_async_session)):
-    try:
-        access_token = await oauth.google.authorize_access_token(request)
-    except OAuthError:
-        return RedirectResponse(url="/")
+    """Google OAuth Callback. Замечание: не требуется вызывать напрямую"""
+    user_data = await get_data_from_authorize_token(request)
 
-    nonce = request.session.get("nonce")
-    user_data = await oauth.google.parse_id_token(nonce=nonce, token=access_token)
-    del request.session["nonce"]
+    if user_data is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization failed or was canceled.")
 
     is_user_exist = await UserDao.find_by_filter(session, {"email": user_data.get("email")})
     if is_user_exist is None:
-        new_user = dict()
         temp = uuid.uuid4()
-        new_user["id"] = temp
-        new_user["nickname"] = f"id_{temp}"
-        new_user["email"] = user_data.get("email")
-        new_user["first_name"] = user_data.get("given_name")
-        new_user["last_name"] = user_data.get("family_name")
-        new_user["password"] = ""
+        new_user = {
+            "id": temp,
+            "nickname": f"id_{temp}",
+            "email": user_data.get("email"),
+            "first_name": user_data.get("given_name"),
+            "last_name": user_data.get("family_name"),
+            "password": "",
+        }
         result = await UserDao.add_one(session, new_user)
-        print(result)
-        # нужно выдать токены access_token и refresh_token
-    else:
-        # сразу же выдать токены доступа
-        ...
 
-    return RedirectResponse(url="/")
+        return generate_tokens_pair({"user_id": str(result.id)})
+    return generate_tokens_pair({"user_id": str(is_user_exist["id"])})
