@@ -19,7 +19,7 @@ from application.auth.schemas import (
     AccessTokenInfo,
     BasicUserFields,
     GetUser,
-    RedirectUserGoogleAuth,
+    RedirectUserAuth,
     ResetPasswordByEmail,
     TokensInfo,
     UserRegister,
@@ -36,12 +36,13 @@ from application.core.responses import (
 from auth.auth import create_jwt_token
 from auth.google_oauth import get_data_from_authorize_token, oauth
 from auth.hashing_password import hash_password
+from auth.yandex_oauth import change_code_to_access_token, change_token_to_user_info
 from config import settings
 from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from mail.mail_sender import send_mail
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -166,15 +167,18 @@ async def change_password_by_provided_token(
     return UserUpdatePassword(**{"id": str(updated_profile[0].id), "email": updated_profile[0].email})
 
 
-@router.get("/login/via_google", response_model=RedirectUserGoogleAuth, status_code=302)
-async def login_google(request: Request):
+@router.get("/login/via_google", response_model=RedirectUserAuth, status_code=302)
+async def redirect_google_auth_server(request: Request):
     """Перенаправление на авторизационный сервер Google для [входа | регистрации] Friendly
 
     **Note:** redirect_uri=http://127.0.0.1:8000/auth/callback/google
     """
     request_from_swagger = request.headers.get("referer", "")
     if request_from_swagger and request_from_swagger.endswith("/docs"):
-        return JSONResponse(status_code=302, content=RedirectUserGoogleAuth().dict())
+        return JSONResponse(
+            status_code=302,
+            content=RedirectUserAuth(**{"msg": "Redirects the user to Google OAuth for authentication"}).dict(),
+        )
 
     # Генерация безопасного nonce (одноразовый криптографический ключ)
     nonce = secrets.token_urlsafe(16)
@@ -202,6 +206,62 @@ async def auth(request: Request, session: AsyncSession = Depends(get_async_sessi
             "email": user_data.get("email"),
             "first_name": user_data.get("given_name"),
             "last_name": user_data.get("family_name"),
+            "password": "",
+        }
+        result = await UserDao.add_one(session, new_user)
+
+        return generate_tokens_pair({"user_id": str(result.id)})
+    return generate_tokens_pair({"user_id": str(is_user_exist["id"])})
+
+
+@router.get("/login/via_yandex", response_model=RedirectUserAuth, status_code=302)
+async def redirect_yandex_auth_server(request: Request):
+    """Перенаправление на авторизационный сервер Яндекс ID для [входа | регистрации] Friendly
+
+    **Note:** redirect_uri=http://127.0.0.1:8000/auth/callback/yandex
+    """
+    request_from_swagger = request.headers.get("referer", "")
+    if request_from_swagger and request_from_swagger.endswith("/docs"):
+        return JSONResponse(
+            status_code=302,
+            content=RedirectUserAuth(**{"msg": "Redirects the user to Yandex OAuth for authentication"}).dict(),
+        )
+
+    redirect_uri = request.url_for("callback_yandex")
+    yandex_auth_url = (
+        f"https://oauth.yandex.ru/authorize?response_type=code&client_id={settings.YDEX_CLIENT_ID}&"
+        f"redirect_uri={redirect_uri}&force_confirm=true"
+    )
+    return RedirectResponse(yandex_auth_url)
+
+
+@router.get(
+    "/callback/yandex",
+    name="callback_yandex",
+    include_in_schema=False,
+    response_model=TokensInfo,
+    responses=BAD_REQUEST,
+)
+async def ydex_auth(request: Request, session: AsyncSession = Depends(get_async_session)):
+    """Yandex OAuth Callback. !Не требуется вызывать напрямую!"""
+    code = request.query_params.get("code")
+    if not code:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The confirmation code is missing.")
+    access_token = await change_code_to_access_token(code)
+    user_data = await change_token_to_user_info(access_token)
+
+    if user_data is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization failed or was canceled.")
+
+    is_user_exist = await UserDao.find_by_filter(session, {"email": user_data.get("default_email")})
+    if is_user_exist is None:
+        temp = uuid.uuid4()
+        new_user = {
+            "id": temp,
+            "nickname": f"id_{temp}",
+            "email": user_data.get("default_email"),
+            "first_name": user_data.get("first_name"),
+            "last_name": user_data.get("last_name"),
             "password": "",
         }
         result = await UserDao.add_one(session, new_user)

@@ -56,7 +56,7 @@ class ResetPasswordByEmail(Email):
     msg: Literal["The email has been sent successfully"] = Field(default="The email has been sent successfully")
 
 
-class RedirectUserGoogleAuth(BaseModel):
-    msg: Literal["Redirects the user to Google OAuth for authentication"] = Field(
-        default="Redirects the user to Google OAuth for authentication"
-    )
+class RedirectUserAuth(BaseModel):
+    """Выполнен запрос на вход через учётную запись стороннего сервиса"""
+
+    msg: str = Field(default="Redirects the user to OAuth server for authentication")
