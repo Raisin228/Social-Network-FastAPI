@@ -17,7 +17,6 @@ from application.auth.request_body import (
 )
 from application.auth.schemas import (
     AccessTokenInfo,
-    BasicUserFields,
     GetUser,
     RedirectUserAuth,
     ResetPasswordByEmail,
@@ -104,7 +103,7 @@ async def refresh_jwt(user: GetUser = Depends(get_current_user_refresh_token)):
     return AccessTokenInfo(access_token=access_token, token_type="Bearer")
 
 
-@router.post("/change_password", response_model=UserUpdatePassword, responses=FORBIDDEN | UNAUTHORIZED)
+@router.post("/change_password", response_model=UserUpdatePassword, responses=FORBIDDEN | UNAUTHORIZED | BAD_REQUEST)
 async def change_account_password(
     inform: ModifyPassword,
     session: AsyncSession = Depends(get_async_session),
@@ -119,7 +118,7 @@ async def change_account_password(
         )
 
     await UserDao.update_row(session, {"password": hash_password(inform.new_password)}, {"id": user.id})
-    return UserUpdatePassword(detail=BasicUserFields(**{"id": user.id, "email": user.email}))
+    return UserUpdatePassword(**{"id": user.id, "email": user.email})
 
 
 @router.post("/single_link_to_password_reset", response_model=ResetPasswordByEmail, responses=NOT_FOUND)

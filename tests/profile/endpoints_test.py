@@ -8,7 +8,7 @@ from application.profile.schemas import AccountDeleted
 from auth.hashing_password import hash_password
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from utils import USER_DATA, get_acs_token
+from utils import USER_DATA, get_token_need_type
 
 
 class TestProfileAPI:
@@ -16,7 +16,7 @@ class TestProfileAPI:
         """Пользователь создал аккаунт и хочет получить информацию из своего профиля"""
         user_id = _create_standard_user.id
         response = await ac.get(
-            "/profile/get_information", headers={"Authorization": f"Bearer {get_acs_token(user_id)}"}
+            "/profile/get_information", headers={"Authorization": f"Bearer {get_token_need_type(user_id)}"}
         )
 
         assert response.status_code == list(SUCCESS.keys())[0]
@@ -76,7 +76,7 @@ class TestProfileAPI:
         """Пользователь удаляет аккаунт из системы"""
         user_id = _create_standard_user.id
         response = await ac.delete(
-            "/profile/delete_account", headers={"Authorization": f"Bearer {get_acs_token(user_id)}"}
+            "/profile/delete_account", headers={"Authorization": f"Bearer {get_token_need_type(user_id)}"}
         )
 
         assert response.status_code == list(SUCCESS.keys())[0]

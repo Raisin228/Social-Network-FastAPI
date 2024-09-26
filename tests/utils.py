@@ -17,7 +17,9 @@ def get_refresh_token(user_id: uuid.UUID = UNIQ_ID, is_incorrect: bool = False) 
     return create_jwt_token(data, token_type=REFRESH_TOKEN_TYPE)
 
 
-def get_acs_token(user_id: uuid.UUID = UNIQ_ID) -> str:
-    """Получить access токен для конкретного user. Ф-ия для ручного вызова"""
+def get_token_need_type(user_id: uuid.UUID = UNIQ_ID, t_type: str = ACCESS_TOKEN_TYPE) -> str:
+    """Получить токен нужного типа для конкретного user. Ф-ия для ручного вызова.
+    По умолчанию выдаёт токен доступа
+    """
     data = {"user_id": str(user_id)}
-    return create_jwt_token(data, token_type=ACCESS_TOKEN_TYPE)
+    return create_jwt_token(data, token_type=t_type)
