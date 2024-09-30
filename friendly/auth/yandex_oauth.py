@@ -1,3 +1,5 @@
+import json
+
 import httpx
 from config import settings
 
@@ -18,11 +20,14 @@ async def change_code_to_access_token(code: str) -> str:
     return token_data.get("access_token")
 
 
-async def change_token_to_user_info(token: str) -> dict:
+async def change_token_to_user_info(token: str) -> dict | None:
     """Получить данные пользователя передав OAuth токен"""
     user_info_url = "https://login.yandex.ru/info"
     async with httpx.AsyncClient() as client:
         user_info_response = await client.get(
             user_info_url, params={"format": "json"}, headers={"Authorization": f"OAuth {token}"}
         )
-        return user_info_response.json()
+        try:
+            return user_info_response.json()
+        except json.decoder.JSONDecodeError:
+            return None

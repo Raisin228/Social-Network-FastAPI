@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from application.auth.dao import UserDao
+from application.auth.models import User
 from auth.hashing_password import hash_password
 from config import settings
 from database import Base, get_async_session
@@ -61,7 +62,7 @@ def event_loop():
 
 
 @pytest.fixture(scope="function")
-async def _create_standard_user(session: AsyncSession):
+async def _create_standard_user(session: AsyncSession) -> User:
     """Создание пользователя перед тестом и удаления после теста. Фикстура"""
     new_user = await UserDao.add_one(
         session,

@@ -192,7 +192,6 @@ async def redirect_google_auth_server(request: Request):
 async def auth(request: Request, session: AsyncSession = Depends(get_async_session)):
     """Google OAuth Callback. Замечание: не требуется вызывать напрямую"""
     user_data = await get_data_from_authorize_token(request)
-
     if user_data is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization failed or was canceled.")
 
@@ -248,7 +247,6 @@ async def ydex_auth(request: Request, session: AsyncSession = Depends(get_async_
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The confirmation code is missing.")
     access_token = await change_code_to_access_token(code)
     user_data = await change_token_to_user_info(access_token)
-
     if user_data is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization failed or was canceled.")
 
