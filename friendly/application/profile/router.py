@@ -10,7 +10,7 @@ from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
-router = APIRouter(prefix="/profile", tags=["User Profile"])
+router = APIRouter(prefix="/profile", tags=["My Profile"])
 
 
 @router.get("/get_information", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED)

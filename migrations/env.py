@@ -1,7 +1,8 @@
 from logging.config import fileConfig
 
 from alembic import context
-from application.profile import User  # noqa
+from application.auth.models import User  # noqa
+from application.friends.models import Friend  # noqa
 from config import settings
 from database import Base
 from sqlalchemy import engine_from_config, pool
