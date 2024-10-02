@@ -24,7 +24,7 @@ class BaseDAO:
     @classmethod
     async def add_one(cls, session: AsyncSession, values: dict) -> model:
         """Добавить один объект"""
-        stmt = insert(cls.model).values(**values).returning(cls.model.id)
+        stmt = insert(cls.model).values(**values)
         await session.execute(stmt)
         await session.commit()
 

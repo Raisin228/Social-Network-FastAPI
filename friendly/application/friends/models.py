@@ -2,7 +2,7 @@ import uuid
 
 import sqlalchemy as sa
 from database import Base
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import Column, ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -13,8 +13,17 @@ class Relations:
 
 class Friend(Base):
     __tablename__ = "friend"
-    __table_args__ = (sa.PrimaryKeyConstraint("user_id", "friend_id"),)
 
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
-    friend_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    user_id: Mapped[uuid.UUID] = Column(ForeignKey("user.id"), nullable=False, ondelete="CASCADE")
+    friend_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), nullable=False, ondelete="CASCADE")
     relationship_type: Mapped[str] = mapped_column(String(11), server_default=Relations.NOT_APPROVE)
+
+    __table_args__ = (
+        sa.PrimaryKeyConstraint("user_id", "friend_id"),
+        Index(
+            "uq_user_id_friend_id_permuted",
+            func.least(user_id, friend_id),
+            func.greatest(user_id, friend_id),
+            unique=True,
+        ),
+    )
