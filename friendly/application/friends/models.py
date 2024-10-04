@@ -14,8 +14,8 @@ class Relations:
 class Friend(Base):
     __tablename__ = "friend"
 
-    user_id: Mapped[uuid.UUID] = Column(ForeignKey("user.id"), nullable=False, ondelete="CASCADE")
-    friend_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), nullable=False, ondelete="CASCADE")
+    user_id: Mapped[uuid.UUID] = Column(ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    friend_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
     relationship_type: Mapped[str] = mapped_column(String(11), server_default=Relations.NOT_APPROVE)
 
     __table_args__ = (

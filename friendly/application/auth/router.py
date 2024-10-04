@@ -151,19 +151,6 @@ async def request_token_to_reset_password(
     return ResetPasswordByEmail(**{"email": reset_mail.email})
 
 
-@router.patch("/replace_existent_password", response_model=UserUpdatePassword, responses=UNAUTHORIZED | FORBIDDEN)
-async def change_password_by_provided_token(
-    data: NewPassword,
-    session: AsyncSession = Depends(get_async_session),
-    user: User = Depends(get_current_user_reset_password_token),
-):
-    """Изменить пароль пользователя через токен из ссылки"""
-    updated_profile = await UserDao.update_row(
-        session, {"password": hash_password(data.new_password)}, {"id": str(user.id)}
-    )
-    return UserUpdatePassword(**{"id": str(updated_profile[0].id), "email": updated_profile[0].email})
-
-
 @router.get("/login/via_google", response_model=RedirectUserAuth, status_code=302)
 async def redirect_google_auth_server(request: Request):
     """Перенаправление на авторизационный сервер Google для [входа | регистрации] Friendly
@@ -263,3 +250,16 @@ async def ydex_auth(request: Request, session: AsyncSession = Depends(get_async_
 
         return generate_tokens_pair({"user_id": str(result.id)})
     return generate_tokens_pair({"user_id": str(is_user_exist["id"])})
+
+
+@router.patch("/replace_existent_password", response_model=UserUpdatePassword, responses=UNAUTHORIZED | FORBIDDEN)
+async def change_password_by_provided_token(
+    data: NewPassword,
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(get_current_user_reset_password_token),
+):
+    """Изменить пароль пользователя через токен из ссылки"""
+    updated_profile = await UserDao.update_row(
+        session, {"password": hash_password(data.new_password)}, {"id": str(user.id)}
+    )
+    return UserUpdatePassword(**{"id": str(updated_profile[0].id), "email": updated_profile[0].email})
