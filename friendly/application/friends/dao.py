@@ -3,7 +3,11 @@ from uuid import UUID
 
 from application.auth.dao import UserDao
 from application.auth.models import User
-from application.core.exceptions import DataDoesNotExist, RequestToYourself
+from application.core.exceptions import (
+    DataDoesNotExist,
+    RequestToYourself,
+    YouNotFriends,
+)
 from application.friends.models import Friend, Relations
 from data_access_object.base import BaseDAO
 from sqlalchemy import BooleanClauseList, and_, case, insert, null, or_, select
@@ -76,3 +80,21 @@ class FriendDao(BaseDAO):
         query = FriendDao.__constructor_select_friends(offset, limit, Relations.NOT_APPROVE, friend_id)
         data = await session.execute(query)
         return [tuple(row) for row in data]
+
+    @classmethod
+    async def end_friendship_with(cls, user: UUID, friend: UUID, session: AsyncSession) -> List[Tuple]:
+        """Удалить друга"""
+        expr_to_users = or_(
+            and_(Friend.user_id == user, Friend.friend_id == friend),
+            and_(Friend.user_id == friend, Friend.friend_id == user),
+        )
+        query = select(Friend).where(and_(expr_to_users, Friend.relationship_type == Relations.FRIEND))
+
+        exec_qe = await session.execute(query)
+        is_friends = exec_qe.scalar()
+        if is_friends is None:
+            raise YouNotFriends
+
+        search_pattern = {"user_id": is_friends.user_id, "friend_id": is_friends.friend_id}
+        deleted_row = await FriendDao.delete_by_filter(session, search_pattern)
+        return deleted_row

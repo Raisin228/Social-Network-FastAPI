@@ -3,12 +3,17 @@ from uuid import UUID
 
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
-from application.core.exceptions import DataDoesNotExist, RequestToYourself
+from application.core.exceptions import (
+    DataDoesNotExist,
+    RequestToYourself,
+    YouNotFriends,
+)
 from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from application.friends.dao import FriendDao
 from application.friends.models import Relations
 from application.friends.schemas import (
     ApplyFriend,
+    DeleteFriendship,
     Friend,
     FriendRequestSent,
     IncomeRequests,
@@ -82,22 +87,50 @@ async def view_entire_appeal(
     ]
 
 
-@router.patch("/friend/accept/{friend_id}", response_model=ApplyFriend, responses=FORBIDDEN | UNAUTHORIZED | NOT_FOUND)
+@router.patch(
+    "/friend/accept/{friend_id}",
+    response_model=ApplyFriend,
+    responses=FORBIDDEN | UNAUTHORIZED | NOT_FOUND | BAD_REQUEST,
+)
 async def approve_friend_request(
     friend_id: UUID,
     user: User = Depends(get_current_user_access_token),
     session: AsyncSession = Depends(get_async_session),
 ):
     """Принять входящий запрос на дружбу"""
+    if friend_id == user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't make yourself a friend")
+
     res = await FriendDao.update_row(
         session, {"relationship_type": Relations.FRIEND}, {"user_id": friend_id, "friend_id": user.id}
     )
     if not res:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="There is no active friendship application. Perhaps the user canceled it",
+            detail="There is no active friendship application. Perhaps the user canceled it or already is a friend",
         )
 
     # TODO прислать уведомление 2му пользователю
     data = res[0]
     return ApplyFriend(**{"friend_id": data[0]})
+
+
+@router.delete(
+    "/friend/remove/{friend_id}", response_model=DeleteFriendship, responses=NOT_FOUND | UNAUTHORIZED | FORBIDDEN
+)
+async def end_friendship_with_user(
+    friend_id: UUID,
+    user: User = Depends(get_current_user_access_token),
+    session: AsyncSession = Depends(get_async_session),
+):
+    """Удалить пользователя из списка друзей"""
+    try:
+        await FriendDao.end_friendship_with(user.id, friend_id, session)
+    except YouNotFriends:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="You aren't friends with the user")
+
+    # TODO сделать отправку уведомления 2му пользователю
+    return DeleteFriendship(**{"former_friend_id": friend_id})
+
+
+# сделать возможность заблокировать пользователя

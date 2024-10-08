@@ -45,3 +45,12 @@ class ApplyFriend(BaseModel):
         examples=["46653e44-1931-49f5-8a32-b9756a56f49d"], description="Now you are friends with this user"
     )
     msg: str = "You become friends!"
+
+
+class DeleteFriendship(BaseModel):
+    """Пользователь больше не является нашим другом"""
+
+    former_friend_id: UUID = Field(
+        examples=["46653e44-1931-49f5-8a32-b9756a56f49d"], description="ID of a former friend"
+    )
+    msg: str = "The user has been removed from the friends list"
