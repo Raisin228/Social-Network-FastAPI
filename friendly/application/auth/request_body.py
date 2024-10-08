@@ -1,3 +1,5 @@
+from typing import Dict
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 
@@ -25,7 +27,7 @@ class NewPassword(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def __is_password_match(cls, values: dict) -> dict:
+    def __is_password_match(cls, values: dict) -> Dict:
         if values.get("new_password") != values.get("confirm_new_password"):
             raise ValueError("the values in new_password and confirm_new_password must match")
         return values

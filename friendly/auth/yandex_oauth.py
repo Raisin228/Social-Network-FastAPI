@@ -1,4 +1,5 @@
 import json
+from typing import Dict
 
 import httpx
 from config import settings
@@ -20,7 +21,7 @@ async def change_code_to_access_token(code: str) -> str:
     return token_data.get("access_token")
 
 
-async def change_token_to_user_info(token: str) -> dict | None:
+async def change_token_to_user_info(token: str) -> Dict | None:
     """Получить данные пользователя передав OAuth токен"""
     user_info_url = "https://login.yandex.ru/info"
     async with httpx.AsyncClient() as client:

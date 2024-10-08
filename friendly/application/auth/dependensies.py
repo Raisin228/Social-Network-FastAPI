@@ -1,3 +1,5 @@
+from typing import Dict
+
 from application.auth.constants import (
     ACCESS_TOKEN_TYPE,
     REFRESH_TOKEN_TYPE,
@@ -15,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 security = HTTPBearer()
 
 
-def checkup_token(req_token_type: str, identity) -> dict | Exception:
+def checkup_token(req_token_type: str, identity) -> Dict | Exception:
     """Соответствует ли токен типу"""
     token = identity.credentials
     data = decode_jwt(token)
@@ -49,7 +51,7 @@ def get_auth_user(token_type: str):
     async def get_user_from_token_type(
         credentials: HTTPAuthorizationCredentials = Depends(security),
         session: AsyncSession = Depends(get_async_session),
-    ) -> dict | None | Exception:
+    ) -> Dict | None | Exception:
         payload = checkup_token(token_type, credentials)
 
         user = await get_user_by_sub_id(payload, session)

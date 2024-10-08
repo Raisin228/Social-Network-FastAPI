@@ -1,3 +1,5 @@
+from typing import Dict
+
 import sqlalchemy.exc
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
@@ -26,7 +28,7 @@ async def change_profile(
     addition_info: AdditionalProfileInfo,
     user: User = Depends(get_current_user_access_token),
     session=Depends(get_async_session),
-) -> dict:
+) -> Dict:
     """Изменить информацию в своём профиле"""
     try:
         data_aft_update = await ProfileDao.update_row(session, dict(addition_info), {"id": str(user.id)})

@@ -32,17 +32,6 @@ UNAUTHORIZED = {
     }
 }
 
-NOT_FOUND = {
-    404: {
-        "description": "Not Found",
-        "content": {
-            "application/json": {
-                "example": {"detail": "The requested resource could not be found but may be available in the future."}
-            }
-        },
-    }
-}
-
 FORBIDDEN = {
     403: {
         "description": "Forbidden",
@@ -52,6 +41,17 @@ FORBIDDEN = {
                     "detail": "The server understood the request, but it refuses to execute it due to restrictions on "
                     "client access to the specified resource"
                 }
+            }
+        },
+    }
+}
+
+NOT_FOUND = {
+    404: {
+        "description": "Not Found",
+        "content": {
+            "application/json": {
+                "example": {"detail": "The requested resource could not be found but may be available in the future."}
             }
         },
     }

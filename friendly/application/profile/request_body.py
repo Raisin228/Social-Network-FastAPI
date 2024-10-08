@@ -1,13 +1,13 @@
 import datetime
 from string import ascii_letters, digits
-from typing import Literal
+from typing import Dict, Literal
 
 from application.profile.utils import check_single_alphabet
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
-class AdditionalProfileInfo(BaseModel):
-    """Параметры запроса при редактировании профиля"""
+class MinUserInformation(BaseModel):
+    """Содержит основную информацию о пользователе"""
 
     first_name: str | None = Field(
         examples=["Jason"], description="User's name", default=None, max_length=32, min_length=2
@@ -16,13 +16,18 @@ class AdditionalProfileInfo(BaseModel):
         examples=["Jr. Borne"], description="User's surname", default=None, max_length=32, min_length=1
     )
     birthday: datetime.date | None = Field(examples=["2004-10-29"], description="User's birthday", default=None)
-    sex: Literal["Man", "Woman"] | None = Field(examples=["Man"], description="User's gender", default=None)
     nickname: str | None = Field(
         examples=["bog_at_04"],
         description="Short name to make it easier to find you or mention you in the entries",
         default=None,
         min_length=5,
     )
+
+
+class AdditionalProfileInfo(MinUserInformation):
+    """Параметры запроса при редактировании профиля"""
+
+    sex: Literal["Man", "Woman"] | None = Field(examples=["Man"], description="User's gender", default=None)
 
     @field_validator("birthday")
     @classmethod
@@ -48,7 +53,7 @@ class AdditionalProfileInfo(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def __is_valid_name_and_last_name(cls, values: dict) -> dict:
+    def __is_valid_name_and_last_name(cls, values: dict) -> Dict:
         f_name: str | None = values.get("first_name")
         l_name: str | None = values.get("last_name")
         nick = values.get("nickname")

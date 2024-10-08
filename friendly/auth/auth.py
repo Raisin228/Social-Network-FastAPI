@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from typing import Dict
 
 from application.auth.constants import (
     ACCESS_TOKEN_TYPE,
@@ -37,7 +38,7 @@ def create_jwt_token(data: dict, token_type: str) -> str:
     return encode_jwt
 
 
-def decode_jwt(token: str) -> dict | Exception:
+def decode_jwt(token: str) -> Dict | Exception:
     """Декодирование JWT токена"""
     try:
         decoded_token = jwt.decode(token, auth_data["secret_key"], algorithms=auth_data["algorithm"])

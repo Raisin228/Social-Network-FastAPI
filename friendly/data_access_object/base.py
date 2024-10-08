@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from fastapi import HTTPException
 from sqlalchemy import delete, insert, inspect, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,7 +10,7 @@ class BaseDAO:
     model = None
 
     @classmethod
-    async def find_by_filter(cls, session: AsyncSession, find_by: dict | None = None) -> None | dict | list[dict]:
+    async def find_by_filter(cls, session: AsyncSession, find_by: dict | None = None) -> None | Dict | List[Dict]:
         """Поиск по фильтрам или получить все записи"""
         query = select(cls.model).filter_by(**find_by)
         data = await session.execute(query)
@@ -58,6 +60,6 @@ class BaseDAO:
         return result.fetchall()
 
     @staticmethod
-    def object_to_dict(obj) -> dict | None:
+    def object_to_dict(obj) -> Dict | None:
         """Преобразовать объект SQLAlchemy в dict"""
         return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs} if obj else None

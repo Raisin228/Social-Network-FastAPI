@@ -1,7 +1,8 @@
 import unicodedata
+from typing import Tuple
 
 
-def check_single_alphabet(value: str | None) -> None | tuple[str, str]:
+def check_single_alphabet(value: str | None) -> None | Tuple[str, str]:
     """Все символы строки из одного алфавита"""
     if value is None:
         return None

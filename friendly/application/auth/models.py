@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from typing import List
 
 from database import Base
 from sqlalchemy import String, inspect
@@ -19,6 +20,6 @@ class User(Base):
     password: Mapped[str] = MappedColumn(String(100), nullable=False)
 
     @classmethod
-    def get_column_names(cls) -> list[str]:
+    def get_column_names(cls) -> List[str]:
         """Получить названия всех столбцов"""
         return [column.name for column in inspect(cls).c]
