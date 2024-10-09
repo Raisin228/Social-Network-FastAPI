@@ -4,8 +4,10 @@ from uuid import UUID
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
 from application.core.exceptions import (
+    AlreadyBlockByUser,
     DataDoesNotExist,
     RequestToYourself,
+    UserUnblocked,
     YouNotFriends,
 )
 from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
@@ -17,6 +19,7 @@ from application.friends.schemas import (
     Friend,
     FriendRequestSent,
     IncomeRequests,
+    UserBlockUnblock,
 )
 from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -115,6 +118,38 @@ async def approve_friend_request(
     return ApplyFriend(**{"friend_id": data[0]})
 
 
+@router.put(
+    "/ban_user/{ban_user_id}", response_model=UserBlockUnblock, responses=FORBIDDEN | UNAUTHORIZED | BAD_REQUEST
+)
+async def ban_annoying_user(
+    ban_user_id: UUID,
+    user: User = Depends(get_current_user_access_token),
+    session: AsyncSession = Depends(get_async_session),
+):
+    """[Заблокировать | разблокировать] определённого пользователя
+
+    **Note:**
+    1) Пользователь не сможет отправлять ВАМ запросы на дружбу
+    2) Будет удалён из списка друзей
+    """
+    try:
+        await FriendDao.block_user(session, user.id, ban_user_id)
+
+        # TODO уведомление 2му пользователю о блокировке
+        return UserBlockUnblock(**{"msg": "This user has been added to blacklist", "block_user_id": ban_user_id})
+    except AlreadyBlockByUser as ex:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"{ex.msg}. You can't block someone who blocked you"
+        )
+    except UserUnblocked:
+        # TODO уведомление 2му пользователю о разблокировке
+        return UserBlockUnblock(
+            **{"msg": "This user has been removed from the blacklist", "block_user_id": ban_user_id}
+        )
+    except RequestToYourself as ex:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.msg)
+
+
 @router.delete(
     "/friend/remove/{friend_id}", response_model=DeleteFriendship, responses=NOT_FOUND | UNAUTHORIZED | FORBIDDEN
 )
@@ -131,6 +166,3 @@ async def end_friendship_with_user(
 
     # TODO сделать отправку уведомления 2му пользователю
     return DeleteFriendship(**{"former_friend_id": friend_id})
-
-
-# сделать возможность заблокировать пользователя

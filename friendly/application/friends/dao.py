@@ -4,13 +4,16 @@ from uuid import UUID
 from application.auth.dao import UserDao
 from application.auth.models import User
 from application.core.exceptions import (
+    AlreadyBlockByUser,
     DataDoesNotExist,
     RequestToYourself,
+    UserUnblocked,
     YouNotFriends,
 )
 from application.friends.models import Friend, Relations
 from data_access_object.base import BaseDAO
-from sqlalchemy import BooleanClauseList, and_, case, insert, null, or_, select
+from sqlalchemy import BooleanClauseList, Select, and_, case, insert, null, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -28,8 +31,8 @@ class FriendDao(BaseDAO):
         return bool_expression
 
     @staticmethod
-    def __constructor_select_friends(offset: int, limit: int, friendship_type: str, user: UUID):
-        """"""
+    def __constructor_select_friends(offset: int, limit: int, friendship_type: str, user: UUID) -> Select[User]:
+        """Конструктор select запроса для выбора входящих запросов на дружбу и списка друзей"""
         condition = FriendDao.__bool_expression_constructor(friendship_type, user)
         join_condition = Friend.user_id == User.id
         if friendship_type == Relations.FRIEND:
@@ -68,7 +71,7 @@ class FriendDao(BaseDAO):
         return cls.model(**values)
 
     @classmethod
-    async def get_all_friends(cls, session: AsyncSession, offset, limit, user: UUID) -> list[Tuple]:
+    async def get_all_friends(cls, session: AsyncSession, offset, limit, user: UUID) -> List[Tuple]:
         """Получить список всех пользователей, с которыми мы дружим"""
         query = FriendDao.__constructor_select_friends(offset, limit, Relations.FRIEND, user)
         data = await session.execute(query)
@@ -98,3 +101,36 @@ class FriendDao(BaseDAO):
         search_pattern = {"user_id": is_friends.user_id, "friend_id": is_friends.friend_id}
         deleted_row = await FriendDao.delete_by_filter(session, search_pattern)
         return deleted_row
+
+    @classmethod
+    async def block_user(cls, session: AsyncSession, user_id: UUID, blocked_user_id: UUID) -> List[Tuple]:
+        """Добавить пользователя в черный список"""
+
+        user_order_1 = {"user_id": user_id, "friend_id": blocked_user_id}
+        user_order_2 = {"user_id": blocked_user_id, "friend_id": user_id}
+
+        if user_id == blocked_user_id:
+            raise RequestToYourself
+
+        # нельзя заблокировать пользователя если он уже это сделал
+        is_we_block = await FriendDao.find_by_filter(session, {**user_order_2, "relationship_type": Relations.BLOCKED})
+        if is_we_block:
+            raise AlreadyBlockByUser
+
+        # при повторном запросе user будет разблокирован
+        is_he_block_now = await FriendDao.find_by_filter(
+            session, {**user_order_1, "relationship_type": Relations.BLOCKED}
+        )
+        if is_he_block_now:
+            await FriendDao.delete_by_filter(session, user_order_1)
+            raise UserUnblocked
+
+        data = {**user_order_1, "relationship_type": Relations.BLOCKED}
+        try:
+            res = await FriendDao.add_one(session, data)
+        except IntegrityError:
+            await session.rollback()
+            res = await FriendDao.update_row(session, data, user_order_1)
+            if not res:
+                res = await FriendDao.update_row(session, data, user_order_2)
+        return res

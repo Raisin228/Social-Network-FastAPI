@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from fastapi import HTTPException
 from sqlalchemy import delete, insert, inspect, select, update
@@ -33,7 +33,7 @@ class BaseDAO:
         return cls.model(**values)
 
     @classmethod
-    async def update_row(cls, session: AsyncSession, new_data: dict, filter_parameters: dict):
+    async def update_row(cls, session: AsyncSession, new_data: dict, filter_parameters: dict) -> List[Tuple]:
         """Выбрать запис(ь|и) и обновить поля"""
         data_without_none = {key: value for key, value in new_data.items() if value is not None}
         if len(data_without_none) == 0:
@@ -48,7 +48,7 @@ class BaseDAO:
         )
         temp = await session.execute(stmt)
         await session.commit()
-        return temp.fetchall()
+        return [tuple(row) for row in temp.fetchall()]
 
     @classmethod
     async def delete_by_filter(cls, session: AsyncSession, find_by: dict):
