@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     YDEX_CLIENT_ID: str = Field(min_length=1)
     YDEX_CLIENT_SECRET: str = Field(min_length=1)
 
+    FIREBASE_CONFIG_FILE: str = "../friendly-firebase-adminsdk.json"
+
     @property
     def db_url_asyncpg(self):
         """DSN основной базы данных"""
