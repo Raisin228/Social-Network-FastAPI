@@ -16,3 +16,4 @@ def send_fcm_notification(device_token: str, title: str, body: str):
 
 
 # Example usage
+send_fcm_notification(device_token="", title="Hello!", body="You have a new notification.")
