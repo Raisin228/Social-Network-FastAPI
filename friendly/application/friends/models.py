@@ -1,8 +1,7 @@
-import uuid
-
 import sqlalchemy as sa
+from application.core.model_types import userId_fk
 from database import Base
-from sqlalchemy import Column, ForeignKey, Index, String, func
+from sqlalchemy import Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -15,8 +14,8 @@ class Relations:
 class Friend(Base):
     __tablename__ = "friend"
 
-    user_id: Mapped[uuid.UUID] = Column(ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
-    friend_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[userId_fk] = mapped_column()
+    friend_id: Mapped[userId_fk] = mapped_column()
     relationship_type: Mapped[str] = mapped_column(String(11), server_default=Relations.NOT_APPROVE)
 
     __table_args__ = (

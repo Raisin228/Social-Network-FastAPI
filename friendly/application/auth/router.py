@@ -262,4 +262,4 @@ async def change_password_by_provided_token(
     updated_profile = await UserDao.update_row(
         session, {"password": hash_password(data.new_password)}, {"id": str(user.id)}
     )
-    return UserUpdatePassword(**{"id": str(updated_profile[0].id), "email": updated_profile[0].email})
+    return UserUpdatePassword(**{"id": str(updated_profile[0][0]), "email": updated_profile[0][6]})

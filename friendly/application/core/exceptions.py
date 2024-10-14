@@ -34,3 +34,8 @@ class SuchDeviceTokenAlreadyExist(BaseCustomException):
         self, msg: str = "The token is already stored in the database for this device. No need to save it again"
     ):
         super().__init__(msg)
+
+
+class NoDevicesAdded(BaseCustomException):
+    def __init__(self, msg: str = "The user has not added any device to receive notifications"):
+        super().__init__(msg)

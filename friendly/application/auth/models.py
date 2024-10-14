@@ -1,16 +1,15 @@
 import datetime
-import uuid
 from typing import List
 
+from application.core.model_types import id_pk
 from database import Base
 from sqlalchemy import String, inspect
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, MappedColumn
 
 
 class User(Base):
     __tablename__ = "user"
-    id: Mapped[uuid.UUID] = MappedColumn(UUID(as_uuid=True), primary_key=True)
+    id: Mapped[id_pk]
     first_name: Mapped[str | None] = MappedColumn(String(32))
     last_name: Mapped[str | None] = MappedColumn(String(32))
     birthday: Mapped[datetime.date | None]

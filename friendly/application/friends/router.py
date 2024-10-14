@@ -30,6 +30,15 @@ from starlette import status
 router = APIRouter(prefix="/users", tags=["Users"])
 
 
+# {
+#     "from": "210160059112",
+#     "notification": {
+#         "title": "Кто то хочет добавить вас в друзья",
+#         "body": "Полезная информация!"
+#     }
+# }
+
+
 @router.post(
     "/friend/add/{friend_id}",
     response_model=FriendRequestSent,
@@ -53,7 +62,10 @@ async def send_friend_request(
     except RequestToYourself as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.msg)
 
-    # TODO прислать уведомление 2му пользователю
+    # send_fcm_notification(
+    #     device_token='eI8V05b_ZX1eYfXdAs9EuE:APA91bHLObWjb_LNanOwB7D38_mbxudQCE6P27IFzNPYVZLqU_wzolRuOSMh6cRbgs6xZ4mSPTo1JeaDUyquFxX8ibqcwa-IylJt5_wFUhk7pYEzWTcsmVtLWZhDLa9Yh8VohDW2i3JA',
+    #     title="Кто то хочет добавить вас в друзья", body='Полезная информация!')
+
     return FriendRequestSent(**{"sender": result.user_id, "recipient": result.friend_id})
 
 

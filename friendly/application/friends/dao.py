@@ -67,7 +67,7 @@ class FriendDao(BaseDAO):
 
         stmt = insert(cls.model).values(values)
         await session.execute(stmt)
-        await session.commit()
+        # await session.commit()
         return cls.model(**values)
 
     @classmethod

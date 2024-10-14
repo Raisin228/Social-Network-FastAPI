@@ -1,19 +1,16 @@
-from firebase_admin import messaging
+from typing import Union
+from uuid import UUID
+
+from application.auth.models import User
+from application.notifications.dao import FirebaseDeviceTokenDao
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def send_fcm_notification(device_token: str, title: str, body: str):
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=body,
-        ),
-        token=device_token,
-    )
+async def firebase_send_notification(
+    sender: User, recipient_id: UUID, header: Union[str, None], info: Union[str, None], session: AsyncSession
+):
+    """Отправить уведомление от A => B"""
+    # data = {"sender": sender.id, "recipient": recipient_id, "title": header, "text": info}
+    # await NotificationDao.add_one(session, data)
 
-    # Send the notification
-    response = messaging.send(message)
-    print(f"Successfully sent message: {response}")
-
-
-# Example usage
-send_fcm_notification(device_token="", title="Hello!", body="You have a new notification.")
+    await FirebaseDeviceTokenDao.user_tokens(session, recipient_id)
