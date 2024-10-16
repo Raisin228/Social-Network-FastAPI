@@ -67,7 +67,7 @@ class FriendDao(BaseDAO):
 
         stmt = insert(cls.model).values(values)
         await session.execute(stmt)
-        # await session.commit()
+        await session.commit()
         return cls.model(**values)
 
     @classmethod
@@ -83,6 +83,21 @@ class FriendDao(BaseDAO):
         query = FriendDao.__constructor_select_friends(offset, limit, Relations.NOT_APPROVE, friend_id)
         data = await session.execute(query)
         return [tuple(row) for row in data]
+
+    # @classmethod
+    # async def
+    # вынести из endpoint сюда + контрить случай с блокировкой
+    # if friend_id == user.id:
+    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't make yourself a friend")
+    #
+    # res = await FriendDao.update_row(
+    #     session, {"relationship_type": Relations.FRIEND}, {"user_id": friend_id, "friend_id": user.id}
+    # )
+    # if not res:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_404_NOT_FOUND,
+    #         detail="There is no active friendship application. Perhaps the user canceled it or already is a friend",
+    #     )
 
     @classmethod
     async def end_friendship_with(cls, user: UUID, friend: UUID, session: AsyncSession) -> List[Tuple]:

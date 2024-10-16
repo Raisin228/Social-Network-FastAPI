@@ -12,7 +12,6 @@ from application.core.exceptions import (
 )
 from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from application.friends.dao import FriendDao
-from application.friends.models import Relations
 from application.friends.schemas import (
     ApplyFriend,
     DeleteFriendship,
@@ -23,20 +22,16 @@ from application.friends.schemas import (
 )
 from database import get_async_session
 from fastapi import APIRouter, Depends, HTTPException, Query
+from firebase.notification import (
+    NotificationEvent,
+    get_notification_message,
+    prepare_notification,
+)
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 router = APIRouter(prefix="/users", tags=["Users"])
-
-
-# {
-#     "from": "210160059112",
-#     "notification": {
-#         "title": "Кто то хочет добавить вас в друзья",
-#         "body": "Полезная информация!"
-#     }
-# }
 
 
 @router.post(
@@ -62,9 +57,8 @@ async def send_friend_request(
     except RequestToYourself as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.msg)
 
-    # send_fcm_notification(
-    #     device_token='eI8V05b_ZX1eYfXdAs9EuE:APA91bHLObWjb_LNanOwB7D38_mbxudQCE6P27IFzNPYVZLqU_wzolRuOSMh6cRbgs6xZ4mSPTo1JeaDUyquFxX8ibqcwa-IylJt5_wFUhk7pYEzWTcsmVtLWZhDLa9Yh8VohDW2i3JA',
-    #     title="Кто то хочет добавить вас в друзья", body='Полезная информация!')
+    noty_msg = get_notification_message(NotificationEvent.FRIEND_REQUEST, user.nickname)
+    await prepare_notification(user, friend_id, session, NotificationEvent.FRIEND_REQUEST, noty_msg)
 
     return FriendRequestSent(**{"sender": result.user_id, "recipient": result.friend_id})
 
@@ -113,21 +107,17 @@ async def approve_friend_request(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Принять входящий запрос на дружбу"""
-    if friend_id == user.id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't make yourself a friend")
 
-    res = await FriendDao.update_row(
-        session, {"relationship_type": Relations.FRIEND}, {"user_id": friend_id, "friend_id": user.id}
-    )
-    if not res:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="There is no active friendship application. Perhaps the user canceled it or already is a friend",
-        )
+    # asdf
+    # asdf
+    # dsfas
+    # вызов ДАО + дописать отправку уведомлений на других ручках
 
-    # TODO прислать уведомление 2му пользователю
-    data = res[0]
-    return ApplyFriend(**{"friend_id": data[0]})
+    notify_msg = get_notification_message(NotificationEvent.APPROVE_APPEAL, user.nickname)
+    await prepare_notification(user, friend_id, session, NotificationEvent.APPROVE_APPEAL, notify_msg)
+
+    # data = res[0]
+    # return ApplyFriend(**{"friend_id": data[0]})
 
 
 @router.put(

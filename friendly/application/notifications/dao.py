@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Dict, List, Union
 from uuid import UUID
 
 from application.core.exceptions import NoDevicesAdded, SuchDeviceTokenAlreadyExist
@@ -19,12 +19,12 @@ class FirebaseDeviceTokenDao(BaseDAO):
         raise SuchDeviceTokenAlreadyExist
 
     @classmethod
-    async def user_tokens(cls, session: AsyncSession, user_id: UUID):
+    async def user_tokens(cls, session: AsyncSession, user_id: UUID) -> Union[Exception, List[Dict]]:
         """Все устройства, куда можно отправлять уведомления"""
         devices = await FirebaseDeviceTokenDao.find_by_filter(session, {"holder_id": user_id})
         if devices is None:
             raise NoDevicesAdded
-        print(devices)
+        return [devices] if isinstance(devices, Dict) else devices
 
 
 class NotificationDao(BaseDAO):
