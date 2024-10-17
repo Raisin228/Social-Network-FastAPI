@@ -4,8 +4,9 @@ from uuid import UUID
 from application.auth.dao import UserDao
 from application.auth.models import User
 from application.core.exceptions import (
-    AlreadyBlockByUser,
+    BlockByUser,
     DataDoesNotExist,
+    NotApproveAppeal,
     RequestToYourself,
     UserUnblocked,
     YouNotFriends,
@@ -84,20 +85,19 @@ class FriendDao(BaseDAO):
         data = await session.execute(query)
         return [tuple(row) for row in data]
 
-    # @classmethod
-    # async def
-    # вынести из endpoint сюда + контрить случай с блокировкой
-    # if friend_id == user.id:
-    #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't make yourself a friend")
-    #
-    # res = await FriendDao.update_row(
-    #     session, {"relationship_type": Relations.FRIEND}, {"user_id": friend_id, "friend_id": user.id}
-    # )
-    # if not res:
-    #     raise HTTPException(
-    #         status_code=status.HTTP_404_NOT_FOUND,
-    #         detail="There is no active friendship application. Perhaps the user canceled it or already is a friend",
-    #     )
+    @classmethod
+    async def approve_friend_appeal(cls, user: User, friend_id: UUID, session: AsyncSession) -> List[Tuple] | Exception:
+        """Принять запрос на дружбу"""
+        if friend_id == user.id:
+            raise RequestToYourself
+        user_request = await FriendDao.find_by_filter(session, {"user_id": friend_id, "friend_id": user.id})
+        if user_request is None:
+            raise DataDoesNotExist
+        elif user_request["relationship_type"] != Relations.NOT_APPROVE:
+            raise NotApproveAppeal
+        return await FriendDao.update_row(
+            session, {"relationship_type": Relations.FRIEND}, {"user_id": friend_id, "friend_id": user.id}
+        )
 
     @classmethod
     async def end_friendship_with(cls, user: UUID, friend: UUID, session: AsyncSession) -> List[Tuple]:
@@ -130,17 +130,15 @@ class FriendDao(BaseDAO):
         # нельзя заблокировать пользователя если он уже это сделал
         is_we_block = await FriendDao.find_by_filter(session, {**user_order_2, "relationship_type": Relations.BLOCKED})
         if is_we_block:
-            raise AlreadyBlockByUser
+            raise BlockByUser
 
         # при повторном запросе user будет разблокирован
-        is_he_block_now = await FriendDao.find_by_filter(
-            session, {**user_order_1, "relationship_type": Relations.BLOCKED}
-        )
+        data = {**user_order_1, "relationship_type": Relations.BLOCKED}
+        is_he_block_now = await FriendDao.find_by_filter(session, data)
         if is_he_block_now:
             await FriendDao.delete_by_filter(session, user_order_1)
             raise UserUnblocked
 
-        data = {**user_order_1, "relationship_type": Relations.BLOCKED}
         try:
             res = await FriendDao.add_one(session, data)
         except IntegrityError:
@@ -148,4 +146,6 @@ class FriendDao(BaseDAO):
             res = await FriendDao.update_row(session, data, user_order_1)
             if not res:
                 res = await FriendDao.update_row(session, data, user_order_2)
+                if not res:
+                    raise DataDoesNotExist
         return res

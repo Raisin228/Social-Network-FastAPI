@@ -4,8 +4,9 @@ from uuid import UUID
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
 from application.core.exceptions import (
-    AlreadyBlockByUser,
+    BlockByUser,
     DataDoesNotExist,
+    NotApproveAppeal,
     RequestToYourself,
     UserUnblocked,
     YouNotFriends,
@@ -50,7 +51,7 @@ async def send_friend_request(
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Such a request has already been sent earlier. Duplicates not allowed",
+            detail="Such a request has already been sent earlier or you have been blocked. Duplicates not allowed",
         )
     except DataDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -107,21 +108,29 @@ async def approve_friend_request(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Принять входящий запрос на дружбу"""
-
-    # asdf
-    # asdf
-    # dsfas
-    # вызов ДАО + дописать отправку уведомлений на других ручках
+    try:
+        res = await FriendDao.approve_friend_appeal(user, friend_id, session)
+    except RequestToYourself:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't make yourself a friend")
+    except DataDoesNotExist:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="There is no active friendship application")
+    except NotApproveAppeal as ex:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"{ex} You are either already friends or you have been blocked.",
+        )
 
     notify_msg = get_notification_message(NotificationEvent.APPROVE_APPEAL, user.nickname)
     await prepare_notification(user, friend_id, session, NotificationEvent.APPROVE_APPEAL, notify_msg)
 
-    # data = res[0]
-    # return ApplyFriend(**{"friend_id": data[0]})
+    data = res[0]
+    return ApplyFriend(**{"friend_id": data[0]})
 
 
 @router.put(
-    "/ban_user/{ban_user_id}", response_model=UserBlockUnblock, responses=FORBIDDEN | UNAUTHORIZED | BAD_REQUEST
+    "/ban_user/{ban_user_id}",
+    response_model=UserBlockUnblock,
+    responses=FORBIDDEN | UNAUTHORIZED | BAD_REQUEST | NOT_FOUND,
 )
 async def ban_annoying_user(
     ban_user_id: UUID,
@@ -137,19 +146,26 @@ async def ban_annoying_user(
     try:
         await FriendDao.block_user(session, user.id, ban_user_id)
 
-        # TODO уведомление 2му пользователю о блокировке
+        notify_msg = get_notification_message(NotificationEvent.BAN, user.nickname)
+        await prepare_notification(user, ban_user_id, session, NotificationEvent.BAN, notify_msg)
+
         return UserBlockUnblock(**{"msg": "This user has been added to blacklist", "block_user_id": ban_user_id})
-    except AlreadyBlockByUser as ex:
+    except BlockByUser as ex:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail=f"{ex.msg}. You can't block someone who blocked you"
         )
     except UserUnblocked:
-        # TODO уведомление 2му пользователю о разблокировке
+        msg_info = get_notification_message(NotificationEvent.BLOCK_TERMINATE, user.nickname)
+        await prepare_notification(user, ban_user_id, session, NotificationEvent.BLOCK_TERMINATE, msg_info)
         return UserBlockUnblock(
             **{"msg": "This user has been removed from the blacklist", "block_user_id": ban_user_id}
         )
     except RequestToYourself as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.msg)
+    except DataDoesNotExist as ex:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"{ex.msg} The user with this ID was not found"
+        )
 
 
 @router.delete(
@@ -166,5 +182,6 @@ async def end_friendship_with_user(
     except YouNotFriends:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="You aren't friends with the user")
 
-    # TODO сделать отправку уведомления 2му пользователю
+    notify_msg = get_notification_message(NotificationEvent.END_FRIENDSHIP, user.nickname)
+    await prepare_notification(user, friend_id, session, NotificationEvent.END_FRIENDSHIP, notify_msg)
     return DeleteFriendship(**{"former_friend_id": friend_id})

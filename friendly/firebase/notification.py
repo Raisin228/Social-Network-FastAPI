@@ -13,14 +13,20 @@ class NotificationEvent(StrEnum):
     """Всевозможные события для уведомлений"""
 
     FRIEND_REQUEST = "Новая заявка в друзья"
-    APPROVE_APPEAL = "Заявка в друзья"
+    APPROVE_APPEAL = "Одобрена заявка"
+    BAN = "Вас заблокировали"
+    BLOCK_TERMINATE = "Блокировка прекращена"
+    END_FRIENDSHIP = "Дружба прекращена"
 
 
 def get_notification_message(event_type: NotificationEvent, nick: str) -> str:
     """Сообщение для уведомления"""
     notify_event_msg = {
-        NotificationEvent.FRIEND_REQUEST: f"Пользователь [{nick}] хочет добавить вас в друзья",
-        NotificationEvent.APPROVE_APPEAL: f"Пользователь [{nick}] принял ваш запрос. Теперь вы друзья",
+        NotificationEvent.FRIEND_REQUEST: f"Пользователь [{nick}] хочет добавить вас в друзья.",
+        NotificationEvent.APPROVE_APPEAL: f"Пользователь [{nick}] принял ваш запрос. Теперь вы друзья.",
+        NotificationEvent.BLOCK_TERMINATE: f"Пользователь [{nick}] удалил вас из чёрного списка. Начните общение!",
+        NotificationEvent.BAN: f"Пользователь [{nick}] добавил вас в чёрный список.",
+        NotificationEvent.END_FRIENDSHIP: f"Пользователь [{nick}] удалил вас из списка друзей",
     }
     return notify_event_msg.get(event_type, "Неизвестное событие")
 
@@ -31,6 +37,7 @@ def send_notification(device_token: str, title: str, body: str) -> str:
     return messaging.send(message)
 
 
+# TODO добавить отправку уведомлений через background task
 async def prepare_notification(
     sender: User, recipient_id: UUID, session: AsyncSession, header: str, info: str
 ) -> List[str]:
@@ -47,5 +54,6 @@ async def prepare_notification(
             msg_id = send_notification(token, header, info)
             id_sent_notif.append(msg_id)
         except FirebaseError:
+            # TODO добавить логирование?
             ...
     return id_sent_notif

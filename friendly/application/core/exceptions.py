@@ -5,7 +5,7 @@ class BaseCustomException(Exception):
 
 
 class DataDoesNotExist(BaseCustomException):
-    def __init__(self, msg: str = "The requested data is not in the system"):
+    def __init__(self, msg: str = "The requested data is not in the system."):
         super().__init__(msg)
 
 
@@ -19,8 +19,13 @@ class YouNotFriends(BaseCustomException):
         super().__init__(msg)
 
 
-class AlreadyBlockByUser(BaseCustomException):
-    def __init__(self, msg: str = "This user has already blocked you"):
+class BlockByUser(BaseCustomException):
+    def __init__(self, msg: str = "This user blocked you"):
+        super().__init__(msg)
+
+
+class NotApproveAppeal(BaseCustomException):
+    def __init__(self, msg: str = "The application status is different from NOT_APPEAL."):
         super().__init__(msg)
 
 
