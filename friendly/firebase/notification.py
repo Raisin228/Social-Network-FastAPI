@@ -37,7 +37,6 @@ def send_notification(device_token: str, title: str, body: str) -> str:
     return messaging.send(message)
 
 
-# TODO добавить отправку уведомлений через background task
 async def prepare_notification(
     sender: User, recipient_id: UUID, session: AsyncSession, header: str, info: str
 ) -> List[str]:
@@ -54,6 +53,7 @@ async def prepare_notification(
             msg_id = send_notification(token, header, info)
             id_sent_notif.append(msg_id)
         except FirebaseError:
+            # TODO добавить отправку уведомлений через background task
             # TODO добавить логирование?
             ...
     return id_sent_notif
