@@ -33,6 +33,8 @@ class Settings(BaseSettings):
 
     FIREBASE_CONFIG_FILE: str = "../friendly-firebase-adminsdk.json"
 
+    REDIS_URL: str = Field(min_length=1)
+
     @property
     def db_url_asyncpg(self):
         """DSN основной базы данных"""

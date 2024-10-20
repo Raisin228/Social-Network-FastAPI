@@ -72,7 +72,7 @@ async def all_people_we_are_friends_with(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Просмотреть список моих друзей"""
-    # TODO навесить redis (можно закэшировать ответ)
+    # TODO навесить redis_service (можно закэшировать ответ)
     friends = await FriendDao.get_all_friends(session, offset, limit, user.id)
     return [
         Friend(status=f[0], friend_id=f[1], first_name=f[2], last_name=f[3], nickname=f[4], birthday=f[5])
