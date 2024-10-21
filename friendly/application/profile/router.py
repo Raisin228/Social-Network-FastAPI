@@ -9,14 +9,19 @@ from application.profile.dao import ProfileDao
 from application.profile.request_body import AdditionalProfileInfo
 from application.profile.schemas import AccountDeleted
 from database import get_async_session
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from redis_service import RedisService
 from starlette import status
 
 router = APIRouter(prefix="/profile", tags=["My Profile"])
 
 
+# TODO внедри уже mypy для типизации
+
+
 @router.get("/get_information", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED)
-async def user_profile(user: User = Depends(get_current_user_access_token)):
+@RedisService.cache_response(ttl=10)
+async def user_profile(_request: Request, user: User = Depends(get_current_user_access_token)):
     """Получить информацию о своём профиле"""
     return user
 

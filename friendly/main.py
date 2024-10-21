@@ -19,7 +19,7 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 async def lifespan(_application: FastAPI):
     """Код исполняемый до/после запуска приложения"""
     print("[Lifespan] Connecting to external services/db")
-    await RedisService.connect_to()
+    ...
     yield
     print("[Lifespan] Disconnecting from external services/db")
     await RedisService.disconnect()

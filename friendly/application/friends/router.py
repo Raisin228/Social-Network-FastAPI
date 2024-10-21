@@ -22,12 +22,13 @@ from application.friends.schemas import (
     UserBlockUnblock,
 )
 from database import get_async_session
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from firebase.notification import (
     NotificationEvent,
     get_notification_message,
     prepare_notification,
 )
+from redis_service import RedisService
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
@@ -65,14 +66,15 @@ async def send_friend_request(
 
 
 @router.get("/my-friends", response_model=List[Friend], responses=FORBIDDEN | UNAUTHORIZED)
+@RedisService.cache_response()
 async def all_people_we_are_friends_with(
+    _request: Request,
     offset: int = Query(0, ge=0),
     limit: int = Query(10, gt=0, le=50),
     user: User = Depends(get_current_user_access_token),
     session: AsyncSession = Depends(get_async_session),
 ):
     """Просмотреть список моих друзей"""
-    # TODO навесить redis_service (можно закэшировать ответ)
     friends = await FriendDao.get_all_friends(session, offset, limit, user.id)
     return [
         Friend(status=f[0], friend_id=f[1], first_name=f[2], last_name=f[3], nickname=f[4], birthday=f[5])
@@ -81,14 +83,15 @@ async def all_people_we_are_friends_with(
 
 
 @router.get("/friend/incoming_friend_requests", response_model=List[IncomeRequests], responses=FORBIDDEN | UNAUTHORIZED)
+@RedisService.cache_response(ttl=20)
 async def view_entire_appeal(
+    _request: Request,
     offset: int = Query(0, ge=0),
     limit: int = Query(10, gt=0, le=50),
     user: User = Depends(get_current_user_access_token),
     session: AsyncSession = Depends(get_async_session),
 ):
     """Получить список всех входящих запросов на дружбу"""
-
     res = await FriendDao.get_income_appeal(session, offset, limit, user.id)
     return [
         IncomeRequests(

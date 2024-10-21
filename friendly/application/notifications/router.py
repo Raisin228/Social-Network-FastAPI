@@ -13,7 +13,8 @@ from application.notifications.schemas import (
     QuantityRemovedNotify,
 )
 from database import get_async_session
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from redis_service import RedisService
 from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/notify", tags=["Notification Server"])
@@ -36,7 +37,9 @@ async def add_device_token_from_fcm(
 
 
 @router.get("/notifications", responses=NOT_FOUND | FORBIDDEN | UNAUTHORIZED, response_model=List[Notification])
+@RedisService.cache_response(ttl=20)
 async def all_notifications(
+    _request: Request,
     offset: int = Query(0, ge=0),
     limit: int = Query(10, ge=10, le=50),
     user: User = Depends(get_current_user_access_token),
