@@ -9,6 +9,7 @@ from application.notifications.router import router as notify_system_router
 from application.profile.router import router as profile_router
 from config import settings
 from fastapi import FastAPI
+from logger_config import log
 from redis_service.__init__ import RedisService
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -18,10 +19,10 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 @asynccontextmanager
 async def lifespan(_application: FastAPI):
     """Код исполняемый до/после запуска приложения"""
-    print("[Lifespan] Connecting to external services/db")
+    log.debug("[Lifespan] Connecting to external services/db")
     ...
     yield
-    print("[Lifespan] Disconnecting from external services/db")
+    log.debug("[Lifespan] Disconnecting from external services/db")
     await RedisService.disconnect()
 
 
