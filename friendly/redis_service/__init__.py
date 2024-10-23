@@ -6,6 +6,7 @@ import redis.asyncio as async_redis
 from application.auth.models import User
 from config import settings
 from fastapi import Request
+from logger_config import filter_traceback, log
 from redis import RedisError
 from redis.asyncio import Redis
 
@@ -13,6 +14,10 @@ from redis.asyncio import Redis
 class RedisService:
     # TODO как будто 2 раза инициализируется async_client
     async_client: Redis = async_redis.from_url(settings.REDIS_URL)
+
+    @classmethod
+    async def connect_to(cls) -> None:
+        cls.async_client = await async_redis.from_url(settings.REDIS_URL)
 
     @classmethod
     async def disconnect(cls) -> None:
@@ -58,8 +63,7 @@ class RedisService:
                 try:
                     await cls.async_client.set(cache_key, bytes_data, ex=ttl)
                 except RedisError as ex:
-                    # TODO сделать лог если что то сломалось
-                    ...
+                    log.error("".join(filter_traceback(ex)))
                 return response
 
             return wrapper

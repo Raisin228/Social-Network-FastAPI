@@ -6,6 +6,7 @@ from application.auth.models import User
 from application.notifications.dao import FirebaseDeviceTokenDao, NotificationDao
 from firebase_admin import messaging
 from firebase_admin.exceptions import FirebaseError
+from logger_config import filter_traceback, log
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -37,6 +38,9 @@ def send_notification(device_token: str, title: str, body: str) -> str:
     return messaging.send(message)
 
 
+# TODO добавить отправку уведомлений через background task
+
+
 async def prepare_notification(
     sender: User, recipient_id: UUID, session: AsyncSession, header: str, info: str
 ) -> List[str]:
@@ -52,8 +56,6 @@ async def prepare_notification(
         try:
             msg_id = send_notification(token, header, info)
             id_sent_notif.append(msg_id)
-        except FirebaseError:
-            # TODO добавить отправку уведомлений через background task
-            # TODO добавить логирование?
-            ...
+        except FirebaseError as ex:
+            log.error("".join(filter_traceback(ex)))
     return id_sent_notif
