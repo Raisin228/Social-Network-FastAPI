@@ -1,13 +1,19 @@
+import asyncio
 from enum import StrEnum
-from typing import List
+from typing import Dict, List
 from uuid import UUID
 
-from application.auth.models import User
+import firebase_admin
 from application.notifications.dao import FirebaseDeviceTokenDao, NotificationDao
-from firebase_admin import messaging
+from config import settings
+from database import session_factory
+from firebase_admin import credentials, messaging
 from firebase_admin.exceptions import FirebaseError
 from logger_config import filter_traceback, log
-from sqlalchemy.ext.asyncio import AsyncSession
+from task_queue.celery_settings import celery
+
+cred = credentials.Certificate(settings.FIREBASE_CONFIG_FILE)
+firebase_admin.initialize_app(cred)
 
 
 class NotificationEvent(StrEnum):
@@ -41,17 +47,21 @@ def send_notification(device_token: str, title: str, body: str) -> str:
 # TODO добавить отправку уведомлений через background task
 
 
-async def prepare_notification(
-    sender: User, recipient_id: UUID, session: AsyncSession, header: str, info: str
-) -> List[str]:
-    """Сохранить уведомление в бд + рассылка на все устройства"""
-    recipient_devices = await FirebaseDeviceTokenDao.user_tokens(session, recipient_id)
+async def get_tokens_and_add_notify(s: Dict, r_id: UUID, title: str, body: str):
+    async with session_factory() as session:
+        recipient_devices = await FirebaseDeviceTokenDao.user_tokens(session, r_id)
+        data = {"sender": s.get("id"), "recipient": r_id, "title": title, "message": body}
+        await NotificationDao.add_one(session, data)
+    return recipient_devices
 
-    data = {"sender": sender.id, "recipient": recipient_id, "title": header, "message": info}
-    await NotificationDao.add_one(session, data)
+
+@celery.task(name="notifications", max_retries=3)
+def prepare_notification(sender: Dict, recipient_id: UUID, header: str, info: str) -> List[str]:
+    """Сохранить уведомление в бд + рассылка на все устройства"""
+    devices = asyncio.run(get_tokens_and_add_notify(sender, recipient_id, header, info))
 
     id_sent_notif = []
-    for row in recipient_devices:
+    for row in devices:
         token = row["device_token"]
         try:
             msg_id = send_notification(token, header, info)

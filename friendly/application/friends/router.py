@@ -60,7 +60,7 @@ async def send_friend_request(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.msg)
 
     noty_msg = get_notification_message(NotificationEvent.FRIEND_REQUEST, user.nickname)
-    await prepare_notification(user, friend_id, session, NotificationEvent.FRIEND_REQUEST, noty_msg)
+    prepare_notification.delay(user.__dict__, friend_id, NotificationEvent.FRIEND_REQUEST, noty_msg)
 
     return FriendRequestSent(**{"sender": result.user_id, "recipient": result.friend_id})
 

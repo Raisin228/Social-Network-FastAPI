@@ -64,9 +64,7 @@ async def register_user(user_data: UserRegistrationData, session: AsyncSession =
     result = await UserDao.add_one(session, user_data)
     response = UserRegister(msg="Account successfully created", detail=GetUser(**result.to_dict()))
 
-    # TODO сделать отправку почты либо через background task либо через celery
-
-    await send_mail(
+    send_mail.delay(
         user_data["email"],
         {"user_email": result.email, "user_nick": result.nickname},
         "Registration was successful",
@@ -135,9 +133,7 @@ async def request_token_to_reset_password(
     reset_token = create_jwt_token({"user_id": str(user["id"])}, token_type=RESET_PASSWORD_TOKEN_TYPE)
     single_link = f"{settings.FRONTEND_URL}reset_password?reset_token={reset_token}"
 
-    # TODO сделать отправку почты либо через background task либо через celery
-
-    await send_mail(
+    send_mail.delay(
         reset_mail.email,
         {
             "user_nick": user["nickname"],

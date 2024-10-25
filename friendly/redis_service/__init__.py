@@ -13,11 +13,11 @@ from redis.asyncio import Redis
 
 class RedisService:
     # TODO как будто 2 раза инициализируется async_client
-    async_client: Redis = async_redis.from_url(settings.REDIS_URL)
+    async_client: Redis = async_redis.from_url(settings.REDIS_URL + "/0")
 
     @classmethod
     async def connect_to(cls) -> None:
-        cls.async_client = await async_redis.from_url(settings.REDIS_URL)
+        cls.async_client = await async_redis.from_url(settings.REDIS_URL + "/0")
 
     @classmethod
     async def disconnect(cls) -> None:
