@@ -125,7 +125,7 @@ async def approve_friend_request(
         )
 
     notify_msg = get_notification_message(NotificationEvent.APPROVE_APPEAL, user.nickname)
-    await prepare_notification(user, friend_id, session, NotificationEvent.APPROVE_APPEAL, notify_msg)
+    prepare_notification.delay(user.__dict__, friend_id, NotificationEvent.APPROVE_APPEAL, notify_msg)
 
     data = res[0]
     return ApplyFriend(**{"friend_id": data[0]})
@@ -151,7 +151,7 @@ async def ban_annoying_user(
         await FriendDao.block_user(session, user.id, ban_user_id)
 
         notify_msg = get_notification_message(NotificationEvent.BAN, user.nickname)
-        await prepare_notification(user, ban_user_id, session, NotificationEvent.BAN, notify_msg)
+        prepare_notification.delay(user.__dict__, ban_user_id, NotificationEvent.BAN, notify_msg)
 
         return UserBlockUnblock(**{"msg": "This user has been added to blacklist", "block_user_id": ban_user_id})
     except BlockByUser as ex:
@@ -160,7 +160,7 @@ async def ban_annoying_user(
         )
     except UserUnblocked:
         msg_info = get_notification_message(NotificationEvent.BLOCK_TERMINATE, user.nickname)
-        await prepare_notification(user, ban_user_id, session, NotificationEvent.BLOCK_TERMINATE, msg_info)
+        prepare_notification.delay(user.__dict__, ban_user_id, NotificationEvent.BLOCK_TERMINATE, msg_info)
         return UserBlockUnblock(
             **{"msg": "This user has been removed from the blacklist", "block_user_id": ban_user_id}
         )
@@ -187,5 +187,5 @@ async def end_friendship_with_user(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="You aren't friends with the user")
 
     notify_msg = get_notification_message(NotificationEvent.END_FRIENDSHIP, user.nickname)
-    await prepare_notification(user, friend_id, session, NotificationEvent.END_FRIENDSHIP, notify_msg)
+    prepare_notification.delay(user.__dict__, friend_id, NotificationEvent.END_FRIENDSHIP, notify_msg)
     return DeleteFriendship(**{"former_friend_id": friend_id})

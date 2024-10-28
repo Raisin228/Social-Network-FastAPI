@@ -6,7 +6,7 @@ from uuid import UUID
 import firebase_admin
 from application.notifications.dao import FirebaseDeviceTokenDao, NotificationDao
 from config import settings
-from database import session_factory
+from database import get_async_session
 from firebase_admin import credentials, messaging
 from firebase_admin.exceptions import FirebaseError
 from logger_config import filter_traceback, log
@@ -47,9 +47,12 @@ def send_notification(device_token: str, title: str, body: str) -> str:
 # TODO добавить отправку уведомлений через background task
 
 
-async def get_tokens_and_add_notify(s: Dict, r_id: UUID, title: str, body: str):
-    async with session_factory() as session:
+async def get_tokens_and_add_notify(s: Dict, r_id: UUID, title: str, body: str) -> List[Dict]:
+    """Получить список всех устройств пользователя и сохранить уведомление в бд"""
+    recipient_devices = []
+    async for session in get_async_session():
         recipient_devices = await FirebaseDeviceTokenDao.user_tokens(session, r_id)
+
         data = {"sender": s.get("id"), "recipient": r_id, "title": title, "message": body}
         await NotificationDao.add_one(session, data)
     return recipient_devices
@@ -58,7 +61,8 @@ async def get_tokens_and_add_notify(s: Dict, r_id: UUID, title: str, body: str):
 @celery.task(name="notifications", max_retries=3)
 def prepare_notification(sender: Dict, recipient_id: UUID, header: str, info: str) -> List[str]:
     """Сохранить уведомление в бд + рассылка на все устройства"""
-    devices = asyncio.run(get_tokens_and_add_notify(sender, recipient_id, header, info))
+    loop = asyncio.get_event_loop()
+    devices = loop.run_until_complete(get_tokens_and_add_notify(sender, recipient_id, header, info))
 
     id_sent_notif = []
     for row in devices:
