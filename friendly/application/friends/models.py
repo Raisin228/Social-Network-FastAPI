@@ -11,6 +11,9 @@ class Relations:
     BLOCKED = "BLOCKED"  # не может отправить запрос на дружбу
 
 
+# TODO Вынести связь в отдельную таблицу
+
+
 class Friend(Base):
     __tablename__ = "friend"
 

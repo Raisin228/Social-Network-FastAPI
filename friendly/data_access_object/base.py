@@ -26,11 +26,13 @@ class BaseDAO:
     @classmethod
     async def add_one(cls, session: AsyncSession, values: dict) -> model:
         """Добавить один объект"""
-        stmt = insert(cls.model).values(**values)
-        await session.execute(stmt)
+        stmt = insert(cls.model).values(**values).returning(cls.model.id)
+        col_id = await session.execute(stmt)
         await session.commit()
 
-        return cls.model(**values)
+        query = select(cls.model).where(cls.model.id == col_id.scalar())
+        result = await session.execute(query)
+        return result.scalar_one_or_none()
 
     @classmethod
     async def update_row(cls, session: AsyncSession, new_data: dict, filter_parameters: dict) -> List[Tuple]:

@@ -2,6 +2,7 @@ import uuid
 
 from application.auth.constants import ACCESS_TOKEN_TYPE, REFRESH_TOKEN_TYPE
 from auth.auth import create_jwt_token
+from auth.hashing_password import hash_password
 
 USER_DATA = {
     "email": "testuser@example.com",
@@ -9,6 +10,31 @@ USER_DATA = {
 }
 
 UNIQ_ID = uuid.uuid4()
+
+id_second = uuid.uuid4()
+
+rows = [
+    {
+        "id": UNIQ_ID,
+        "first_name": "Bog",
+        "last_name": None,
+        "birthday": None,
+        "sex": None,
+        "nickname": f"id_{UNIQ_ID}",
+        "email": USER_DATA["email"],
+        "password": hash_password(USER_DATA["password"]),
+    },
+    {
+        "id": id_second,
+        "first_name": "Bog",
+        "last_name": None,
+        "birthday": None,
+        "sex": None,
+        "nickname": f"id_{id_second}",
+        "email": "lambdadev@gmail.com",
+        "password": hash_password(USER_DATA["password"]),
+    },
+]
 
 
 def get_refresh_token(user_id: uuid.UUID = UNIQ_ID, is_incorrect: bool = False) -> str:

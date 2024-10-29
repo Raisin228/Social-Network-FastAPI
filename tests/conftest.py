@@ -3,16 +3,14 @@ from typing import AsyncGenerator
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from application.auth.dao import UserDao
 from application.auth.models import User
-from auth.hashing_password import hash_password
 from config import settings
 from database import Base, get_async_session
 from fastapi_mail import FastMail
 from httpx import ASGITransport, AsyncClient
 from main import app
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from utils import UNIQ_ID, USER_DATA, get_token_need_type
+from utils import get_token_need_type, rows
 
 test_async_engine = create_async_engine(url=settings.db_url_for_test, echo=False, pool_size=5, max_overflow=10)
 
@@ -49,8 +47,8 @@ async def prepare_database():
     async with test_async_engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
     yield
-    async with test_async_engine.begin() as connection:
-        await connection.run_sync(Base.metadata.drop_all)
+    # async with test_async_engine.begin() as connection:
+    #     await connection.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture(scope="session")
@@ -64,17 +62,14 @@ def event_loop():
 @pytest.fixture(scope="function")
 async def _create_standard_user(session: AsyncSession) -> User:
     """Создание пользователя перед тестом и удаления после теста. Фикстура"""
-    new_user = await UserDao.add_one(
-        session,
-        {
-            "id": UNIQ_ID,
-            "nickname": f"id_{UNIQ_ID}",
-            "email": USER_DATA["email"],
-            "password": hash_password(USER_DATA["password"]),
-        },
-    )
-    yield new_user
-    await UserDao.delete_by_filter(session, {"id": new_user.id})
+    info = rows[0]
+    data = User(**info)
+    session.add(data)
+    await session.commit()
+
+    yield data
+    await session.delete(data)
+    await session.commit()
 
 
 @pytest.fixture(scope="function")
