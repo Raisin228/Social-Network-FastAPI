@@ -1,9 +1,8 @@
 from typing import Dict, List, Tuple
 
-from fastapi import HTTPException
+from application.core.exceptions import DataDoesNotExist
 from sqlalchemy import delete, insert, inspect, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette import status
 
 
 class BaseDAO:
@@ -18,7 +17,7 @@ class BaseDAO:
 
         if len(result) == 0:
             return None
-        result = [cls.object_to_dict(obj) for obj in result]
+        result = [obj.to_dict() for obj in result]
         if len(result) == 1:
             return result[0]
         return result
@@ -39,9 +38,7 @@ class BaseDAO:
         """Выбрать запис(ь|и) и обновить поля"""
         data_without_none = {key: value for key, value in new_data.items() if value is not None}
         if len(data_without_none) == 0:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Specify the fields with the values to update"
-            )
+            raise DataDoesNotExist("Specify the fields with the values to update")
         stmt = (
             update(cls.model)
             .values(**dict(data_without_none))
@@ -58,7 +55,6 @@ class BaseDAO:
         stmt = delete(cls.model).filter_by(**find_by).returning(*cls.model.__table__.columns)
         result = await session.execute(stmt)
         await session.commit()
-
         return result.fetchall()
 
     @staticmethod

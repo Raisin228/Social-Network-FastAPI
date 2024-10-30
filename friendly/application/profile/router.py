@@ -4,6 +4,7 @@ import sqlalchemy.exc
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
 from application.auth.schemas import GetUser
+from application.core.exceptions import DataDoesNotExist
 from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from application.profile.dao import ProfileDao
 from application.profile.request_body import AdditionalProfileInfo
@@ -40,6 +41,8 @@ async def change_profile(
         element = data_aft_update[0]
         columns = [column for column in User.get_column_names()]
         return dict(zip(columns, element))
+    except DataDoesNotExist as ex:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.msg)
     except sqlalchemy.exc.IntegrityError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user with this nickname already exists")
 

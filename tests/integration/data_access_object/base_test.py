@@ -2,8 +2,9 @@ import uuid
 
 import pytest
 from application.auth.models import User
+from application.core.exceptions import DataDoesNotExist
 from data_access_object.base import BaseDAO
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import UNIQ_ID, rows
@@ -34,7 +35,6 @@ class TestFindByFilter:
         inform = [User(**us) for us in rows]
         session.add_all(inform)
         await session.commit()
-
         result = await BaseDAO.find_by_filter(session, find_by={"first_name": "Bog"})
         assert rows == result
 
@@ -57,8 +57,38 @@ class TestAddOne:
 
 class TestUpdateRow:
     async def test_upd_without_data(self, _create_standard_user, session: AsyncSession):
-        await BaseDAO.update_row(session, {}, {"id": rows[0].get("id")})
+        """Тест. Новые данные не указаны"""
+        with pytest.raises(DataDoesNotExist, match="Specify the fields with the values to update"):
+            await BaseDAO.update_row(session, {}, {"id": rows[0].get("id")})
 
-    # дописать интеграционные тесты для basedao
-    # async def test_upd_single_row(self, _create_standard_user, session: AsyncSession):
-    #     await BaseDAO.update_row(session, {'first_name': 'James', 'last_name': 'Bourne'}, {'id': rows[0].get('id')})
+    async def test_upd_single_row(self, _create_standard_user, session: AsyncSession):
+        """Тест. Данные действительно обновляются"""
+        upd_data = await BaseDAO.update_row(
+            session, {"first_name": "James", "last_name": "Bourne"}, {"id": rows[0].get("id")}
+        )
+        query = select(User).where(User.id == rows[0].get("id"))
+        res = await session.execute(query)
+        data_from_rows_with_upd_fields = rows[0]
+        data_from_rows_with_upd_fields["first_name"] = "James"
+        data_from_rows_with_upd_fields["last_name"] = "Bourne"
+        assert res.scalar_one_or_none().to_dict() == data_from_rows_with_upd_fields
+        assert upd_data == [tuple(data_from_rows_with_upd_fields.values())]
+
+
+class TestDeleteByFilter:
+    async def test_single_record_remove(self, session: AsyncSession):
+        """Тест. Удаление одной записи по фильтру"""
+        info = rows[0]
+        data = User(**info)
+        session.add(data)
+        await session.commit()
+        del_row = await BaseDAO.delete_by_filter(session, {"id": rows[0].get("id")})
+        query = select(User).where(User.id == rows[0].get("id"))
+        res = await session.execute(query)
+        assert res.scalar_one_or_none() is None
+        assert del_row == [tuple(rows[0].values())]
+
+    async def test_no_data_on_such_filter(self, session: AsyncSession):
+        """Тест. Указали фильтр, которому не соответствуют данные"""
+        empty_res = await BaseDAO.delete_by_filter(session, {"first_name": "Alen"})
+        assert empty_res == []
