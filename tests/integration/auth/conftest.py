@@ -42,3 +42,11 @@ def _mock_ydex_change_token_to_user() -> AsyncMock:
     with patch("application.auth.router.change_token_to_user_info") as mock:
         mock.return_value = {"first_name": "Богдан", "last_name": "Атрошенко", "default_email": USER_DATA["email"]}
         yield mock
+
+
+@pytest.fixture()
+def _mock_send_mail() -> AsyncMock:
+    """Отправить письмо на почту через Celery"""
+    with patch("application.auth.router.send_mail.delay") as mock:
+        mock.return_value = {"message": "Email has been sent"}
+        yield mock

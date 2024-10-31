@@ -116,7 +116,7 @@ async def change_account_password(
         )
 
     try:
-        await UserDao.update_row(session, {"password": inform.new_password}, {"id": user.id})
+        await UserDao.update_row(session, {"password": hash_password(inform.new_password)}, {"id": user.id})
     except DataDoesNotExist as ex:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.msg)
     return UserUpdatePassword(**{"id": user.id, "email": user.email})

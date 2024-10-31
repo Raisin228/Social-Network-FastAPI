@@ -1,12 +1,10 @@
 import asyncio
 from typing import AsyncGenerator
-from unittest.mock import AsyncMock, patch
 
 import pytest
 from application.auth.models import User
 from config import settings
 from database import Base, get_async_session
-from fastapi_mail import FastMail
 from httpx import ASGITransport, AsyncClient
 from main import app
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -47,8 +45,8 @@ async def prepare_database():
     async with test_async_engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
     yield
-    async with test_async_engine.begin() as connection:
-        await connection.run_sync(Base.metadata.drop_all)
+    # async with test_async_engine.begin() as connection:
+    #     await connection.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture(scope="session")
@@ -76,10 +74,3 @@ async def _create_standard_user(session: AsyncSession) -> User:
 async def get_access_token():
     """Получить access токен для конкретного user. Фикстура"""
     return get_token_need_type()
-
-
-@pytest.fixture()
-def _mock_send_message() -> AsyncMock:
-    """Замокать ф-ию отправки сообщения на почту"""
-    with patch.object(FastMail, "send_message", new_callable=AsyncMock) as mock_method:
-        yield mock_method

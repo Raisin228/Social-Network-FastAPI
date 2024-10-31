@@ -3,9 +3,9 @@ from uuid import UUID
 
 from application.auth.dao import UserDao
 from application.auth.models import User
-from application.core.exceptions import (
+from application.core.exceptions import DataDoesNotExist
+from application.friends.exceptions import (
     BlockByUser,
-    DataDoesNotExist,
     NotApproveAppeal,
     RequestToYourself,
     UserUnblocked,

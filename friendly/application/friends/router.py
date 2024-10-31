@@ -3,16 +3,16 @@ from uuid import UUID
 
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
-from application.core.exceptions import (
+from application.core.exceptions import DataDoesNotExist
+from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
+from application.friends.dao import FriendDao
+from application.friends.exceptions import (
     BlockByUser,
-    DataDoesNotExist,
     NotApproveAppeal,
     RequestToYourself,
     UserUnblocked,
     YouNotFriends,
 )
-from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
-from application.friends.dao import FriendDao
 from application.friends.schemas import (
     ApplyFriend,
     DeleteFriendship,

@@ -10,6 +10,7 @@ from application.auth.constants import (
 from config import settings
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
+from logger_config import log
 
 auth_data = settings.auth_data
 
@@ -44,5 +45,5 @@ def decode_jwt(token: str) -> Dict | Exception:
         decoded_token = jwt.decode(token, auth_data["secret_key"], algorithms=auth_data["algorithm"])
         return decoded_token
     except JWTError as e:
-        print(e)
+        log.error(e)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token invalid!")
