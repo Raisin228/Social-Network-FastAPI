@@ -22,7 +22,7 @@ class FriendDao(BaseDAO):
     model = Friend
 
     @staticmethod
-    def __bool_expression_constructor(friendship: str, user: UUID) -> BooleanClauseList:
+    def _bool_expression_constructor(friendship: str, user: UUID) -> BooleanClauseList:
         """Конструктор bool выражения для where"""
         conditions = [Friend.friend_id == user]
 
@@ -32,9 +32,9 @@ class FriendDao(BaseDAO):
         return bool_expression
 
     @staticmethod
-    def __constructor_select_friends(offset: int, limit: int, friendship_type: str, user: UUID) -> Select[User]:
+    def _constructor_select_friends(offset: int, limit: int, friendship_type: str, user: UUID) -> Select[User]:
         """Конструктор select запроса для выбора входящих запросов на дружбу и списка друзей"""
-        condition = FriendDao.__bool_expression_constructor(friendship_type, user)
+        condition = FriendDao._bool_expression_constructor(friendship_type, user)
         join_condition = Friend.user_id == User.id
         if friendship_type == Relations.FRIEND:
             join_condition = case(
@@ -62,7 +62,7 @@ class FriendDao(BaseDAO):
         """Создать запрос на дружбу. Cтатус: (NOT_APPROVE)"""
 
         if values.get("user_id") == values.get("friend_id"):
-            raise RequestToYourself
+            raise RequestToYourself()
         if await UserDao.find_by_filter(session, {"id": values.get("friend_id")}) is None:
             raise DataDoesNotExist
 
@@ -74,27 +74,25 @@ class FriendDao(BaseDAO):
     @classmethod
     async def get_all_friends(cls, session: AsyncSession, offset, limit, user: UUID) -> List[Tuple]:
         """Получить список всех пользователей, с которыми мы дружим"""
-        query = FriendDao.__constructor_select_friends(offset, limit, Relations.FRIEND, user)
+        query = FriendDao._constructor_select_friends(offset, limit, Relations.FRIEND, user)
         data = await session.execute(query)
         return [tuple(friend) for friend in data]
 
     @classmethod
-    async def get_income_appeal(cls, session: AsyncSession, offset, limit, friend_id: UUID) -> List[Tuple]:
+    async def get_income_appeal(cls, session: AsyncSession, offset, limit, usr_id: UUID) -> List[Tuple]:
         """Получить входящие запросы на дружду"""
-        query = FriendDao.__constructor_select_friends(offset, limit, Relations.NOT_APPROVE, friend_id)
+        query = FriendDao._constructor_select_friends(offset, limit, Relations.NOT_APPROVE, usr_id)
         data = await session.execute(query)
         return [tuple(row) for row in data]
 
     @classmethod
     async def approve_friend_appeal(cls, user: User, friend_id: UUID, session: AsyncSession) -> List[Tuple] | Exception:
         """Принять запрос на дружбу"""
-        if friend_id == user.id:
-            raise RequestToYourself
         user_request = await FriendDao.find_by_filter(session, {"user_id": friend_id, "friend_id": user.id})
         if user_request is None:
             raise DataDoesNotExist
         elif user_request["relationship_type"] != Relations.NOT_APPROVE:
-            raise NotApproveAppeal
+            raise NotApproveAppeal()
         return await FriendDao.update_row(
             session, {"relationship_type": Relations.FRIEND}, {"user_id": friend_id, "friend_id": user.id}
         )
@@ -111,7 +109,7 @@ class FriendDao(BaseDAO):
         exec_qe = await session.execute(query)
         is_friends = exec_qe.scalar()
         if is_friends is None:
-            raise YouNotFriends
+            raise YouNotFriends()
 
         search_pattern = {"user_id": is_friends.user_id, "friend_id": is_friends.friend_id}
         deleted_row = await FriendDao.delete_by_filter(session, search_pattern)
@@ -125,19 +123,19 @@ class FriendDao(BaseDAO):
         user_order_2 = {"user_id": blocked_user_id, "friend_id": user_id}
 
         if user_id == blocked_user_id:
-            raise RequestToYourself
+            raise RequestToYourself()
 
         # нельзя заблокировать пользователя если он уже это сделал
         is_we_block = await FriendDao.find_by_filter(session, {**user_order_2, "relationship_type": Relations.BLOCKED})
         if is_we_block:
-            raise BlockByUser
+            raise BlockByUser()
 
         # при повторном запросе user будет разблокирован
         data = {**user_order_1, "relationship_type": Relations.BLOCKED}
         is_he_block_now = await FriendDao.find_by_filter(session, data)
         if is_he_block_now:
             await FriendDao.delete_by_filter(session, user_order_1)
-            raise UserUnblocked
+            raise UserUnblocked()
 
         try:
             res = await FriendDao.add_one(session, data)

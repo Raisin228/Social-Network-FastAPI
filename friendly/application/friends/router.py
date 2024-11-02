@@ -52,7 +52,7 @@ async def send_friend_request(
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Such a request has already been sent earlier or you have been blocked. Duplicates not allowed",
+            detail="Such a request has already been sent earlier or you have been blocked. Duplicates not allowed.",
         )
     except DataDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -66,7 +66,7 @@ async def send_friend_request(
 
 
 @router.get("/my-friends", response_model=List[Friend], responses=FORBIDDEN | UNAUTHORIZED)
-@RedisService.cache_response()
+@RedisService.cache_response(udc_pdc=False)
 async def all_people_we_are_friends_with(
     _request: Request,
     offset: int = Query(0, ge=0),
@@ -114,8 +114,6 @@ async def approve_friend_request(
     """Принять входящий запрос на дружбу"""
     try:
         res = await FriendDao.approve_friend_appeal(user, friend_id, session)
-    except RequestToYourself:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You can't make yourself a friend")
     except DataDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="There is no active friendship application")
     except NotApproveAppeal as ex:

@@ -25,7 +25,6 @@ from application.auth.schemas import (
     UserUpdatePassword,
 )
 from application.auth.utils import generate_tokens_pair
-from application.core.exceptions import DataDoesNotExist
 from application.core.responses import (
     BAD_REQUEST,
     CONFLICT,
@@ -115,10 +114,7 @@ async def change_account_password(
             detail="the password from the current_password field does not match your account password",
         )
 
-    try:
-        await UserDao.update_row(session, {"password": hash_password(inform.new_password)}, {"id": user.id})
-    except DataDoesNotExist as ex:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.msg)
+    await UserDao.update_row(session, {"password": hash_password(inform.new_password)}, {"id": user.id})
     return UserUpdatePassword(**{"id": user.id, "email": user.email})
 
 
@@ -259,10 +255,7 @@ async def change_password_by_provided_token(
     user: User = Depends(get_current_user_reset_password_token),
 ):
     """Изменить пароль пользователя через токен из ссылки"""
-    try:
-        updated_profile = await UserDao.update_row(
-            session, {"password": hash_password(data.new_password)}, {"id": str(user.id)}
-        )
-    except DataDoesNotExist as ex:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.msg)
+    updated_profile = await UserDao.update_row(
+        session, {"password": hash_password(data.new_password)}, {"id": str(user.id)}
+    )
     return UserUpdatePassword(**{"id": str(updated_profile[0][0]), "email": updated_profile[0][6]})

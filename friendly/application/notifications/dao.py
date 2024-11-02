@@ -21,7 +21,7 @@ class FirebaseDeviceTokenDao(BaseDAO):
         device_for_user = await FirebaseDeviceTokenDao.find_by_filter(session, {"device_token": token})
         if device_for_user is None:
             return await FirebaseDeviceTokenDao.add_one(session, {"holder_id": user_id, "device_token": token})
-        raise SuchDeviceTokenAlreadyExist
+        raise SuchDeviceTokenAlreadyExist()
 
     @classmethod
     async def user_tokens(cls, session: AsyncSession, user_id: UUID) -> List[Dict]:
