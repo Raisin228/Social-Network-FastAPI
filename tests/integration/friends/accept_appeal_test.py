@@ -1,9 +1,11 @@
 from unittest.mock import AsyncMock
 
 from application.auth.dao import UserDao
-from application.core.responses import NOT_FOUND, SUCCESS
+from application.core.responses import FORBIDDEN, NOT_FOUND, SUCCESS
+from application.friends.models import Friend, Relations
 from firebase.notification import NotificationEvent, get_notification_message
 from httpx import AsyncClient
+from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_token_need_type, rows
 
@@ -43,19 +45,24 @@ class TestApproveFriendRequest:
         assert resp.status_code == list(NOT_FOUND.keys())[0]
         assert resp.json() == {"detail": "There is no active friendship application"}
 
-    # async def test_appeal_status_error(self, _create_standard_user, ac: AsyncClient, session: AsyncSession):
-    #     usr = _create_standard_user.to_dict()
-    #     second_usr = await UserDao.add_one(session, rows[1])
-    #     s_usr_id = second_usr.id
-    #
-    #     stmt = insert(Friend).values(
-    #         {'user_id': usr.get('id'), 'friend_id': s_usr_id, 'relationship_type': Relations.FRIEND})
-    #     await session.execute(stmt)
-    #     await session.commit()
+    async def test_appeal_status_error(self, _create_standard_user, ac: AsyncClient, session: AsyncSession):
+        """Тест. Статус заявки != NOT_APPROVE. Пользователи либо друзья, либо заблокированы"""
+        usr = _create_standard_user.to_dict()
+        second_usr = await UserDao.add_one(session, rows[1])
+        s_usr_id = second_usr.id
 
-    # resp = await ac.patch(f'/users/friend/accept/{s_usr_id}',
-    #                       headers={"Authorization": f"Bearer {get_token_need_type(usr.get('id'))}"})
-    # assert resp.status_code == list(FORBIDDEN.keys())[0]
-    # assert resp.json() == {
-    #     'detail': "The application status is different from NOT_APPEAL. You are either already friends or "
-    #               "you have been blocked."}
+        stmt = insert(Friend).values(
+            {"user_id": usr.get("id"), "friend_id": s_usr_id, "relationship_type": Relations.FRIEND}
+        )
+        await session.execute(stmt)
+        await session.commit()
+
+        resp = await ac.patch(
+            f"/users/friend/accept/{s_usr_id}",
+            headers={"Authorization": f"Bearer {get_token_need_type(usr.get('id'))}"},
+        )
+        assert resp.status_code == list(FORBIDDEN.keys())[0]
+        assert resp.json() == {
+            "detail": "The application status is different from NOT_APPEAL. You are either already friends or "
+            "you have been blocked."
+        }

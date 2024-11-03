@@ -39,7 +39,7 @@ class FriendDao(BaseDAO):
         if friendship_type == Relations.FRIEND:
             join_condition = case(
                 (Friend.user_id == user, User.id == Friend.friend_id), else_=User.id == Friend.user_id
-            )
+            )  # pragma: no cover
 
         return (
             select(Friend.relationship_type, User.id, User.first_name, User.last_name, User.nickname, User.birthday)
@@ -59,7 +59,7 @@ class FriendDao(BaseDAO):
 
     @classmethod
     async def friend_request(cls, session: AsyncSession, values: dict) -> model:
-        """Создать запрос на дружбу. Cтатус: (NOT_APPROVE)"""
+        """Создать запрос на дружбу."""
 
         if values.get("user_id") == values.get("friend_id"):
             raise RequestToYourself()
@@ -74,25 +74,29 @@ class FriendDao(BaseDAO):
     @classmethod
     async def get_all_friends(cls, session: AsyncSession, offset, limit, user: UUID) -> List[Tuple]:
         """Получить список всех пользователей, с которыми мы дружим"""
-        query = FriendDao._constructor_select_friends(offset, limit, Relations.FRIEND, user)
+        query = FriendDao._constructor_select_friends(offset, limit, Relations.FRIEND.value, user)
         data = await session.execute(query)
         return [tuple(friend) for friend in data]
 
     @classmethod
     async def get_income_appeal(cls, session: AsyncSession, offset, limit, usr_id: UUID) -> List[Tuple]:
         """Получить входящие запросы на дружду"""
-        query = FriendDao._constructor_select_friends(offset, limit, Relations.NOT_APPROVE, usr_id)
+        query = FriendDao._constructor_select_friends(offset, limit, Relations.NOT_APPROVE.value, usr_id)
         data = await session.execute(query)
         return [tuple(row) for row in data]
 
     @classmethod
     async def approve_friend_appeal(cls, user: User, friend_id: UUID, session: AsyncSession) -> List[Tuple] | Exception:
         """Принять запрос на дружбу"""
-        user_request = await FriendDao.find_by_filter(session, {"user_id": friend_id, "friend_id": user.id})
-        if user_request is None:
-            raise DataDoesNotExist
-        elif user_request["relationship_type"] != Relations.NOT_APPROVE:
+        user_request_from_him = await FriendDao.find_by_filter(session, {"user_id": friend_id, "friend_id": user.id})
+        usr_request_from_us = await FriendDao.find_by_filter(session, {"user_id": user.id, "friend_id": friend_id})
+
+        if (
+            user_request_from_him is not None and user_request_from_him["relationship_type"] != Relations.NOT_APPROVE
+        ) or (usr_request_from_us is not None and usr_request_from_us["relationship_type"] != Relations.NOT_APPROVE):
             raise NotApproveAppeal()
+        elif user_request_from_him is None and usr_request_from_us is None:
+            raise DataDoesNotExist
         return await FriendDao.update_row(
             session, {"relationship_type": Relations.FRIEND}, {"user_id": friend_id, "friend_id": user.id}
         )
@@ -138,7 +142,7 @@ class FriendDao(BaseDAO):
             raise UserUnblocked()
 
         try:
-            res = await FriendDao.add_one(session, data)
+            res = await FriendDao.friend_request(session, data)
         except IntegrityError:
             await session.rollback()
             res = await FriendDao.update_row(session, data, user_order_1)

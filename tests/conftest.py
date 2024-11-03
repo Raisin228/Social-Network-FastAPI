@@ -45,8 +45,8 @@ async def prepare_database():
     async with test_async_engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)
     yield
-    # async with test_async_engine.begin() as connection:
-    #     await connection.run_sync(Base.metadata.drop_all)
+    async with test_async_engine.begin() as connection:
+        await connection.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture(scope="session")

@@ -150,7 +150,6 @@ async def ban_annoying_user(
 
         notify_msg = get_notification_message(NotificationEvent.BAN, user.nickname)
         prepare_notification.delay(user.__dict__, ban_user_id, NotificationEvent.BAN, notify_msg)
-
         return UserBlockUnblock(**{"msg": "This user has been added to blacklist", "block_user_id": ban_user_id})
     except BlockByUser as ex:
         raise HTTPException(
