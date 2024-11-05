@@ -1,12 +1,12 @@
 import uuid
 from unittest.mock import AsyncMock
 
-from application.auth.dao import UserDao
 from application.core.responses import BAD_REQUEST, NOT_FOUND, SUCCESS
 from firebase.notification import NotificationEvent, get_notification_message
 from httpx import AsyncClient
+from integration.friends.conftest import get_two_users
 from sqlalchemy.ext.asyncio import AsyncSession
-from utils import get_token_need_type, rows
+from utils import get_token_need_type
 
 
 class TestSendFriendRequest:
@@ -14,40 +14,38 @@ class TestSendFriendRequest:
         self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
     ):
         """Тест. Отправить запрос на дружбу от пользователя А -> B"""
-        usr = _create_standard_user.to_dict()
-        usr.pop("password")
-        second_usr = await UserDao.add_one(session, rows[1])
+        store = await get_two_users(_create_standard_user, session)
 
         response = await ac.post(
-            f"/users/friend/add/{second_usr.id}",
-            headers={"Authorization": f"Bearer {get_token_need_type(usr.get('id'))}"},
+            f"/users/friend/add/{store[1].get('id')}",
+            headers={"Authorization": f"Bearer {get_token_need_type(store[0].get('id'))}"},
         )
         assert response.status_code == list(SUCCESS.keys())[0]
         _mock_prepare_notification.delay.assert_called_once_with(
-            usr,
-            second_usr.id,
+            store[0],
+            store[1].get("id"),
             NotificationEvent.FRIEND_REQUEST,
-            get_notification_message(NotificationEvent.FRIEND_REQUEST, usr.get("nickname")),
+            get_notification_message(NotificationEvent.FRIEND_REQUEST, store[0].get("nickname")),
         )
         assert response.json() == {
-            "sender": str(usr.get("id")),
-            "recipient": str(second_usr.id),
+            "sender": str(store[0].get("id")),
+            "recipient": str(store[1].get("id")),
             "msg": "The friendship request has been sent. After confirmation, " "you will become friends!",
         }
 
-    async def test_resending_request(self, _create_standard_user, ac: AsyncClient, session: AsyncSession):
+    async def test_resending_request(
+        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
+    ):
         """Тест. Повторная отправка запроса на дружбу"""
-        usr = _create_standard_user.to_dict()
-        usr.pop("password")
-        second_usr = await UserDao.add_one(session, rows[1])
+        store = await get_two_users(_create_standard_user, session)
 
         await ac.post(
-            f"/users/friend/add/{second_usr.id}",
-            headers={"Authorization": f"Bearer {get_token_need_type(usr.get('id'))}"},
+            f"/users/friend/add/{store[1].get('id')}",
+            headers={"Authorization": f"Bearer {get_token_need_type(store[0].get('id'))}"},
         )
         response = await ac.post(
-            f"/users/friend/add/{second_usr.id}",
-            headers={"Authorization": f"Bearer {get_token_need_type(usr.get('id'))}"},
+            f"/users/friend/add/{store[1].get('id')}",
+            headers={"Authorization": f"Bearer {get_token_need_type(store[0].get('id'))}"},
         )
         assert response.status_code == list(BAD_REQUEST.keys())[0]
         assert response.json() == {

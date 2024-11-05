@@ -23,8 +23,8 @@ class RedisService:
     async def disconnect(cls) -> None:
         try:
             await cls.async_client.aclose()
-        except AttributeError:
-            print("There is no active connection")
+        except AttributeError as ex:
+            log.error(f"{ex}. ----------> There is no active Redis connection!")
 
     @classmethod
     def __key_builder(cls, request: Request, user: Union[User, None]) -> str:

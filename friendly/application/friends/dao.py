@@ -72,18 +72,13 @@ class FriendDao(BaseDAO):
         return cls.model(**values)
 
     @classmethod
-    async def get_all_friends(cls, session: AsyncSession, offset, limit, user: UUID) -> List[Tuple]:
-        """Получить список всех пользователей, с которыми мы дружим"""
-        query = FriendDao._constructor_select_friends(offset, limit, Relations.FRIEND.value, user)
+    async def get_notes_by_status(
+        cls, status_appeal: str, session: AsyncSession, offset, limit, user: UUID
+    ) -> List[Tuple]:
+        """Получить заявки с определённым статусом"""
+        query = FriendDao._constructor_select_friends(offset, limit, status_appeal, user)
         data = await session.execute(query)
-        return [tuple(friend) for friend in data]
-
-    @classmethod
-    async def get_income_appeal(cls, session: AsyncSession, offset, limit, usr_id: UUID) -> List[Tuple]:
-        """Получить входящие запросы на дружду"""
-        query = FriendDao._constructor_select_friends(offset, limit, Relations.NOT_APPROVE.value, usr_id)
-        data = await session.execute(query)
-        return [tuple(row) for row in data]
+        return [tuple(note) for note in data]
 
     @classmethod
     async def approve_friend_appeal(cls, user: User, friend_id: UUID, session: AsyncSession) -> List[Tuple] | Exception:
@@ -148,6 +143,4 @@ class FriendDao(BaseDAO):
             res = await FriendDao.update_row(session, data, user_order_1)
             if not res:
                 res = await FriendDao.update_row(session, data, user_order_2)
-                if not res:
-                    raise DataDoesNotExist
         return res

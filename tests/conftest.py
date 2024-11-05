@@ -1,12 +1,15 @@
 import asyncio
 from typing import AsyncGenerator
+from unittest.mock import patch
 
+import fakeredis
 import pytest
 from application.auth.models import User
 from config import settings
 from database import Base, get_async_session
 from httpx import ASGITransport, AsyncClient
 from main import app
+from redis_service import RedisService
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from utils import get_token_need_type, rows
 
@@ -47,6 +50,15 @@ async def prepare_database():
     yield
     async with test_async_engine.begin() as connection:
         await connection.run_sync(Base.metadata.drop_all)
+
+
+@pytest.fixture(autouse=True, scope="session")
+async def replace_redis_by_fakeredis():
+    """Заменяем действительный сервер Redis на FakeRedis"""
+    test_redis_client = fakeredis.aioredis.FakeRedis()
+    with patch.object(RedisService, "async_client", test_redis_client):
+        yield
+    await test_redis_client.close()
 
 
 @pytest.fixture(scope="session")

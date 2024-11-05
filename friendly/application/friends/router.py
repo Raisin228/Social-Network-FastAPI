@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 from uuid import UUID
 
 from application.auth.dependensies import get_current_user_access_token
@@ -13,6 +13,7 @@ from application.friends.exceptions import (
     UserUnblocked,
     YouNotFriends,
 )
+from application.friends.models import Relations
 from application.friends.schemas import (
     ApplyFriend,
     DeleteFriendship,
@@ -65,17 +66,22 @@ async def send_friend_request(
     return FriendRequestSent(**{"sender": result.user_id, "recipient": result.friend_id})
 
 
-@router.get("/my-friends", response_model=List[Friend], responses=FORBIDDEN | UNAUTHORIZED)
+@router.get("/friends", response_model=List[Friend], responses=FORBIDDEN | UNAUTHORIZED)
 @RedisService.cache_response(udc_pdc=False)
-async def all_people_we_are_friends_with(
+async def people_user_friends_with(
     _request: Request,
+    whose_friends_usr_id: Union[UUID, None] = Query(default=None),
     offset: int = Query(0, ge=0),
     limit: int = Query(10, gt=0, le=50),
     user: User = Depends(get_current_user_access_token),
     session: AsyncSession = Depends(get_async_session),
 ):
-    """Просмотреть список моих друзей"""
-    friends = await FriendDao.get_all_friends(session, offset, limit, user.id)
+    """Просмотреть список друзей пользователя.
+    * Если не передать whose_friends_usr_id, то будет список наших друзей
+    * Если передать, то получим друзей этого пользователя
+    """
+    temp = user.id if whose_friends_usr_id is None else whose_friends_usr_id
+    friends = await FriendDao.get_notes_by_status(Relations.FRIEND, session, offset, limit, temp)
     return [
         Friend(status=f[0], friend_id=f[1], first_name=f[2], last_name=f[3], nickname=f[4], birthday=f[5])
         for f in friends
@@ -92,7 +98,7 @@ async def view_entire_appeal(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Получить список всех входящих запросов на дружбу"""
-    res = await FriendDao.get_income_appeal(session, offset, limit, user.id)
+    res = await FriendDao.get_notes_by_status(Relations.NOT_APPROVE, session, offset, limit, user.id)
     return [
         IncomeRequests(
             status=row[0], sender_id=row[1], first_name=row[2], last_name=row[3], nickname=row[4], birthday=row[5]
@@ -153,19 +159,19 @@ async def ban_annoying_user(
         return UserBlockUnblock(**{"msg": "This user has been added to blacklist", "block_user_id": ban_user_id})
     except BlockByUser as ex:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=f"{ex.msg}. You can't block someone who blocked you"
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"{ex.msg} You can't block someone who blocked you."
         )
     except UserUnblocked:
         msg_info = get_notification_message(NotificationEvent.BLOCK_TERMINATE, user.nickname)
         prepare_notification.delay(user.__dict__, ban_user_id, NotificationEvent.BLOCK_TERMINATE, msg_info)
         return UserBlockUnblock(
-            **{"msg": "This user has been removed from the blacklist", "block_user_id": ban_user_id}
+            **{"msg": "This user has been removed from the blacklist.", "block_user_id": ban_user_id}
         )
     except RequestToYourself as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.msg)
     except DataDoesNotExist as ex:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"{ex.msg} The user with this ID was not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"{ex.msg} The user with this ID was not found."
         )
 
 
