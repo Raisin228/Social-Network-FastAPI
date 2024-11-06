@@ -10,6 +10,7 @@ from database import Base, get_async_session
 from httpx import ASGITransport, AsyncClient
 from main import app
 from redis_service import RedisService
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from utils import get_token_need_type, rows
 
@@ -86,3 +87,11 @@ async def _create_standard_user(session: AsyncSession) -> User:
 async def get_access_token():
     """Получить access токен для конкретного user. Фикстура"""
     return get_token_need_type()
+
+
+@pytest.fixture(autouse=True)
+async def setup_and_teardown(session: AsyncSession):
+    """После каждого теста чистим таблицу User"""
+    yield
+    await session.execute(text('TRUNCATE TABLE "user" RESTART IDENTITY CASCADE;'))
+    await session.commit()

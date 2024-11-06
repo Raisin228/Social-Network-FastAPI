@@ -50,9 +50,11 @@ class NotificationDao(BaseDAO):
         return list(notifications.scalars())
 
     @classmethod
-    async def change_notify_status(cls, n_id: UUID, session: AsyncSession) -> Union[Exception, Tuple]:
+    async def change_notify_status(
+        cls, n_id: UUID, receiver_id: UUID, session: AsyncSession
+    ) -> Union[Exception, Tuple]:
         """Изменить статус уведомления"""
-        notify = await NotificationDao.find_by_filter(session, {"id": n_id})
+        notify = await NotificationDao.find_by_filter(session, {"id": n_id, "recipient": receiver_id})
         if notify is None:
             raise DataDoesNotExist
 

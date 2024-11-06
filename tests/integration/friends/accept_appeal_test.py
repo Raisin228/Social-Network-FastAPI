@@ -3,9 +3,9 @@ from unittest.mock import AsyncMock
 from application.core.responses import FORBIDDEN, NOT_FOUND, SUCCESS
 from application.friends.dao import FriendDao
 from application.friends.models import Relations
+from conftest import get_two_users
 from firebase.notification import NotificationEvent, get_notification_message
 from httpx import AsyncClient
-from integration.friends.conftest import get_two_users
 from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_token_need_type
 

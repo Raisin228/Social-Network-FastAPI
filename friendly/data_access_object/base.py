@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 
 from application.core.exceptions import DataDoesNotExist
-from sqlalchemy import delete, insert, inspect, select, update
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -56,8 +56,3 @@ class BaseDAO:
         result = await session.execute(stmt)
         await session.commit()
         return result.fetchall()
-
-    @staticmethod
-    def object_to_dict(obj) -> Dict | None:
-        """Преобразовать объект SQLAlchemy в dict"""
-        return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs} if obj else None

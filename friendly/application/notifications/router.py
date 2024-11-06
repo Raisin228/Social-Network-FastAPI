@@ -31,7 +31,7 @@ async def add_device_token_from_fcm(
     """Для получения уведомлений необходимо добавить устройство"""
     try:
         await FirebaseDeviceTokenDao.add_token(session, user.id, body.device_token)
-        return FCMTokenSavedSuccess(**{"device_token": body.device_token})
+        return FCMTokenSavedSuccess(device_token=body.device_token)
     except SuchDeviceTokenAlreadyExist as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.msg)
 
@@ -49,12 +49,12 @@ async def all_notifications(
     excite = await NotificationDao.get_notifications(offset, limit, user.id, session)
     if not excite:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No incoming notifications.")
-    return [Notification(**event.__dict__) for event in excite]
+    return excite
 
 
 @router.patch("/mark-notify-read/{n_id}", response_model=Notification, responses=NOT_FOUND | UNAUTHORIZED | FORBIDDEN)
 async def mark_as_read(
-    n_id: UUID, _user: User = Depends(get_current_user_access_token), session: AsyncSession = Depends(get_async_session)
+    n_id: UUID, user: User = Depends(get_current_user_access_token), session: AsyncSession = Depends(get_async_session)
 ):
     """Пометить сообщение как прочитанное
 
@@ -62,7 +62,7 @@ async def mark_as_read(
     * При повторной отправке уведомление помечается **НЕ**прочитанным
     """
     try:
-        r = await NotificationDao.change_notify_status(n_id, session)
+        r = await NotificationDao.change_notify_status(n_id, user.id, session)
     except DataDoesNotExist as ex:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
