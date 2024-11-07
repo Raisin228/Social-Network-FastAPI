@@ -8,7 +8,11 @@ taskkill /PID <PID> /F - завершаем его
 ---  
 Запуск pre-commit
 `pre-commit run -a`
-    
+
+Запуск Celery Worker   
+`celery -A celery_worker.__init__:celery worker --loglevel=INFO --pool=solo`
+Запуск Flower
+`celery -A task_queue.__init__:celery flower`
 
 
 

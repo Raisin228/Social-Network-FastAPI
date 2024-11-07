@@ -3,6 +3,7 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
+from admin import setup_admin
 from application.auth.router import router as auth_router
 from application.friends.router import router as friends_router
 from application.notifications.router import router as notify_system_router
@@ -13,6 +14,7 @@ from fastapi.responses import ORJSONResponse
 from logger_config import filter_traceback, log
 from redis_service.__init__ import RedisService
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.staticfiles import StaticFiles
 
 sys.path.insert(1, os.path.join(sys.path[0], ".."))
 
@@ -36,6 +38,10 @@ app = FastAPI(
     title="Friendly🫂",
     lifespan=lifespan,
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+setup_admin(app)
 
 
 @app.exception_handler(Exception)

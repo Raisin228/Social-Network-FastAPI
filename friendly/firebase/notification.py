@@ -44,9 +44,6 @@ def send_notification(device_token: str, title: str, body: str) -> str:
     return messaging.send(message)
 
 
-# TODO добавить отправку уведомлений через background task
-
-
 async def get_tokens_and_add_notify(s: Dict, r_id: UUID, title: str, body: str) -> List[Dict]:
     """Получить список всех устройств пользователя и сохранить уведомление в бд"""
     recipient_devices = []

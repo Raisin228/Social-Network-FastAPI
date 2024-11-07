@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 class Relations:
     FRIEND = "FRIEND"  # друзья видят посты друг друга в ленте
-    NOT_APPROVE = "NOT_APPROVE"  # А отправил заявку и ожидает ответа
+    NOT_APPROVE = "NOT_APPROVE"  # Отправил заявку и ожидает ответа
     BLOCKED = "BLOCKED"  # не может отправить запрос на дружбу
 
 

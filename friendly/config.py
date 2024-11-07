@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     YDEX_CLIENT_ID: str = Field(min_length=1)
     YDEX_CLIENT_SECRET: str = Field(min_length=1)
 
-    FIREBASE_CONFIG_FILE: str = "./friendly-firebase-adminsdk.json"
+    FIREBASE_CONFIG_FILE: str = "../friendly-firebase-adminsdk.json"
 
     REDIS_URL: str = Field(min_length=1)
 
