@@ -19,7 +19,7 @@ class Friend(Base):
     relationship_type: Mapped[str] = mapped_column(String(11), server_default=Relations.NOT_APPROVE)
 
     __table_args__ = (
-        sa.PrimaryKeyConstraint("user_id", "friend_id"),
+        sa.PrimaryKeyConstraint("user_id", "friend_id", name="pk_user_id_friend_id"),
         Index(
             "uq_user_id_friend_id_permuted",
             func.least(user_id, friend_id),
