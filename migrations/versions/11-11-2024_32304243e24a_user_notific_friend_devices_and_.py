@@ -1,8 +1,8 @@
-"""User | Notific | Friend | Devices and UserAdmin View
+"""User | Notific | Friend | Devices and AdminView
 
-Revision ID: 51ed7eb2ed1b
+Revision ID: 32304243e24a
 Revises: 
-Create Date: 2024-11-09 15:14:35.997778
+Create Date: 2024-11-11 21:02:25.986591
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "51ed7eb2ed1b"
+revision: str = "32304243e24a"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -50,6 +50,7 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("holder_id", sa.UUID(), nullable=False),
         sa.Column("device_token", sa.String(length=256), nullable=False),
+        sa.CheckConstraint("char_length(device_token) >= 140", name="min_device_token_len_140"),
         sa.ForeignKeyConstraint(["holder_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -81,7 +82,7 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("sender", sa.UUID(), nullable=False),
         sa.Column("recipient", sa.UUID(), nullable=False),
-        sa.Column("title", sa.String(length=128), nullable=True),
+        sa.Column("title", sa.String(length=128), nullable=False),
         sa.Column("message", sa.String(length=500), nullable=True),
         sa.Column(
             "created_at",
@@ -94,6 +95,10 @@ def upgrade() -> None:
             sa.String(length=6),
             server_default="UNREAD",
             nullable=True,
+        ),
+        sa.CheckConstraint(
+            "created_at >= DATE '1900-01-01' AND created_at <= CURRENT_TIMESTAMP",
+            name="check_created_at_1900",
         ),
         sa.ForeignKeyConstraint(["recipient"], ["user.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["sender"], ["user.id"], ondelete="CASCADE"),
