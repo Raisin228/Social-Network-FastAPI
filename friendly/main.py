@@ -51,7 +51,7 @@ async def unicorn_exception_handler(_request: Request, exc: Exception):
     return ORJSONResponse(status_code=500, content={"message": "Что-то пошло не так o_0, пожалуйста, попробуйте позже"})
 
 
-app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET_KEY)
+app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET_KEY, max_age=3_600)
 
 app.include_router(auth_router)
 app.include_router(profile_router)

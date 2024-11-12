@@ -3,7 +3,7 @@ from typing import List
 
 from application.core.model_types import id_pk
 from database import Base
-from sqlalchemy import CheckConstraint, String, inspect
+from sqlalchemy import Boolean, CheckConstraint, String, inspect
 from sqlalchemy.orm import Mapped, MappedColumn
 
 
@@ -17,6 +17,7 @@ class User(Base):
     nickname: Mapped[str] = MappedColumn(String(39), nullable=False, unique=True)
     email: Mapped[str] = MappedColumn(String(100), nullable=False, unique=True)
     password: Mapped[str] = MappedColumn(String(60), nullable=False)
+    is_admin: Mapped[bool] = MappedColumn(Boolean, nullable=False, server_default="false")
 
     __table_args__ = (
         CheckConstraint("char_length(first_name) >= 2", name="min_first_name_len_2"),

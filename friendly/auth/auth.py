@@ -3,6 +3,7 @@ from typing import Dict
 
 from application.auth.constants import (
     ACCESS_TOKEN_TYPE,
+    ADMIN_PANEL_ACCESS_TOKEN_TYPE,
     REFRESH_TOKEN_TYPE,
     RESET_PASSWORD_TOKEN_TYPE,
     TOKEN_TYPE_FIELD,
@@ -18,13 +19,15 @@ auth_data = settings.auth_data
 def create_jwt_token(data: dict, token_type: str) -> str:
     """Создание токена"""
     payload = data.copy()
-    if token_type == REFRESH_TOKEN_TYPE:
-        exp_time = timedelta(days=30)
-    elif token_type == ACCESS_TOKEN_TYPE:
-        exp_time = timedelta(days=30, hours=24)
-    elif token_type == RESET_PASSWORD_TOKEN_TYPE:
-        exp_time = timedelta(hours=1)
-    else:
+    temp = {
+        REFRESH_TOKEN_TYPE: timedelta(days=30),
+        ACCESS_TOKEN_TYPE: timedelta(days=30, hours=24),
+        RESET_PASSWORD_TOKEN_TYPE: timedelta(hours=1),
+        ADMIN_PANEL_ACCESS_TOKEN_TYPE: timedelta(minutes=1),
+    }
+
+    exp_time = temp.get(token_type)
+    if exp_time is None:
         raise ValueError("Incorrect jwt token type")
     expire = datetime.now(timezone.utc) + exp_time
     payload.update(

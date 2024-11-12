@@ -1,5 +1,6 @@
 from typing import List, Type
 
+from application.auth.constants import ADMIN_PANEL_ACCESS_TOKEN_TYPE
 from application.auth.dao import UserDao
 from application.auth.models import User
 from application.friends.models import Friend, Relations
@@ -8,10 +9,14 @@ from application.notifications.models import (
     Notification,
     NotificationStatus,
 )
+from auth.auth import create_jwt_token, decode_jwt
 from auth.hashing_password import hash_password
+from config import settings
 from database import async_engine, get_async_session
 from firebase.notification import NotificationEvent
+from logger_config import log
 from sqladmin import Admin, ModelView
+from sqladmin.authentication import AuthenticationBackend
 from starlette.requests import Request
 from wtforms import Form, SelectField, StringField
 from wtforms.validators import Email, Length
@@ -131,9 +136,6 @@ class NotificationAdmin(BaseView, model=Notification):
         },
     }
 
-    def is_visible(self, request: Request) -> bool:
-        return False
-
     async def scaffold_form(self, rules: List[str] | None = None) -> Type[Form]:
         """Добавляем Sender / Recipient в create форму"""
         form = await super().scaffold_form()
@@ -142,10 +144,46 @@ class NotificationAdmin(BaseView, model=Notification):
         return form
 
 
+class AdminAuth(AuthenticationBackend):
+    async def login(self, request: Request) -> bool:
+        """Проводим проверку пользователя и выдачу токена для доступа к админ.панели"""
+        form = await request.form()
+        mail, password = form["username"], form["password"]
+
+        user = None
+        async for session in get_async_session():
+            user = await UserDao.authenticate_user(mail, password, session)
+            if user is None or not user.get("is_admin"):
+                return False
+
+        data_for_payload = {"user_id": str(user.get("id"))}
+        token = create_jwt_token(data_for_payload, ADMIN_PANEL_ACCESS_TOKEN_TYPE)
+
+        log.info(f'!!!User -> {user.get("id")} logged in ADMIN PANEL!!!')
+        request.session["access_admin_panel_token"] = token
+        return True
+
+    async def logout(self, request: Request) -> bool:
+        request.session.clear()
+        return True
+
+    async def authenticate(self, request: Request) -> bool:
+        token = request.session.get("access_admin_panel_token")
+        if not token or not decode_jwt(token).get("token_type") == ADMIN_PANEL_ACCESS_TOKEN_TYPE:
+            request.session.clear()
+            return False
+        return True
+
+
 def setup_admin(application):
     """Связываем админку с приложением"""
+    authentication_backend = AdminAuth(secret_key=settings.SESSION_SECRET_KEY)
     admin = Admin(
-        application, async_engine, title="Friendly Administration", favicon_url="/static/images/emblem_logo.png"
+        application,
+        async_engine,
+        title="Friendly Administration",
+        favicon_url="/static/images/emblem_logo.png",
+        authentication_backend=authentication_backend,
     )
     admin.add_view(UserAdmin)
     admin.add_view(FriendAdmin)

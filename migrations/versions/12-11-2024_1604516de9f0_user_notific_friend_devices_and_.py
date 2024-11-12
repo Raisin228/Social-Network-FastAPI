@@ -1,8 +1,8 @@
 """User | Notific | Friend | Devices and AdminView
 
-Revision ID: 32304243e24a
+Revision ID: 1604516de9f0
 Revises: 
-Create Date: 2024-11-11 21:02:25.986591
+Create Date: 2024-11-12 17:38:47.028420
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "32304243e24a"
+revision: str = "1604516de9f0"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -30,6 +30,7 @@ def upgrade() -> None:
         sa.Column("nickname", sa.String(length=39), nullable=False),
         sa.Column("email", sa.String(length=100), nullable=False),
         sa.Column("password", sa.String(length=60), nullable=False),
+        sa.Column("is_admin", sa.Boolean(), server_default="false", nullable=False),
         sa.CheckConstraint(
             "birthday >= DATE '1900-01-01' AND birthday <= CURRENT_DATE",
             name="check_birthday_1900",
