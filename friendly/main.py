@@ -12,6 +12,7 @@ from config import settings
 from fastapi import FastAPI, Request
 from fastapi.responses import ORJSONResponse
 from logger_config import filter_traceback, log
+from object_storage_service.s3 import YOSService
 from redis_service.__init__ import RedisService
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.staticfiles import StaticFiles
@@ -22,10 +23,11 @@ sys.path.insert(1, os.path.join(sys.path[0], ".."))
 @asynccontextmanager
 async def lifespan(_application: FastAPI):
     """Код исполняемый до/после запуска приложения"""
-    log.debug("[Lifespan] Connecting to external services/db")
+    log.debug("[Lifespan] Connecting to external services/db/storage")
     await RedisService.connect_to()
+    await YOSService.get_client()
     yield
-    log.debug("[Lifespan] Disconnecting from external services/db")
+    log.debug("[Lifespan] Disconnecting from external services/db/storage")
     await RedisService.disconnect()
 
 

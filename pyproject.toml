@@ -27,6 +27,7 @@ loguru = "^0.7.2"
 celery = "^5.4.0"
 flower = "^2.0.1"
 sqladmin = "^0.20.1"
+aiobotocore = "^2.15.2"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

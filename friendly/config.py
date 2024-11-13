@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     YDEX_CLIENT_ID: str = Field(min_length=1)
     YDEX_CLIENT_SECRET: str = Field(min_length=1)
 
+    AWS_ACCESS_KEY_ID: str = Field(min_length=1)
+    AWS_SECRET_ACCESS_KEY: str = Field(min_length=1)
+    AWS_REGION_NAME: str = Field(min_length=1)
+    AWS_ENDPOINT_URL: str = Field(min_length=1)
+
     FIREBASE_CONFIG_FILE: str = "../friendly-firebase-adminsdk.json"
 
     REDIS_URL: str = Field(min_length=1)
