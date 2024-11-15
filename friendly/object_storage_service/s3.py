@@ -1,7 +1,10 @@
 from typing import Union
+from uuid import UUID
 
 import aiobotocore.session
 from config import settings
+
+# TODO реализовать сжатие изображений (без потери качества)
 
 
 class YOSService:
@@ -16,7 +19,7 @@ class YOSService:
         return cls.session
 
     @classmethod
-    async def get_client(cls) -> aiobotocore.session.AioBaseClient:
+    async def create_client(cls) -> aiobotocore.session.AioBaseClient:
         """Создать клиента для взаимодействия с хранилищем"""
         config = {
             "region_name": settings.AWS_REGION_NAME,
@@ -26,5 +29,18 @@ class YOSService:
         }
         if cls.client is None:
             cls.session = cls.__get_session()
-            cls.client = cls.session.create_client("s3", **config)
+            cls.client = await cls.session.create_client("s3", **config).__aenter__()
         return cls.client
+
+    @classmethod
+    async def save_file(cls, file_name: str, user_id: UUID, file: bytes, file_type: str) -> str:
+        path_to_file = f"{user_id}/{file_name}"
+        await cls.client.put_object(Bucket=settings.AWS_BUCKET_NAME, Key=path_to_file, Body=file, ContentType=file_type)
+        return f"{settings.AWS_ENDPOINT_URL}/{settings.AWS_BUCKET_NAME}/{path_to_file}"
+
+    @classmethod
+    async def close_resources(cls):
+        if cls.client is not None:
+            await cls.client.__aexit__(None, None, None)
+            cls.client = None
+            cls.session = None

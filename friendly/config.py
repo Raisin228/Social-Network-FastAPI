@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -35,6 +36,11 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str = Field(min_length=1)
     AWS_REGION_NAME: str = Field(min_length=1)
     AWS_ENDPOINT_URL: str = Field(min_length=1)
+    AWS_BUCKET_NAME: str = Field(min_length=1)
+
+    FILE_MAX_SIZE_BYTE: int = 1024 * 1024 * 20  # 20MB
+    ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/png", "image/gif"]
+    ALLOWED_FILE_TYPES: List[str] = ["video/mp4", "audio/mpeg"]
 
     FIREBASE_CONFIG_FILE: str = "../friendly-firebase-adminsdk.json"
 

@@ -61,7 +61,18 @@ CONFLICT = {
     409: {
         "description": "Conflict",
         "content": {
-            "application/json": {"example": {"detail": "Cannot be executed due to conflicting resource access"}}
+            "application/json": {"example": {"detail": "Cannot be executed due to conflicting resource access."}}
+        },
+    }
+}
+
+REQUEST_ENTITY_TOO_LARGE = {
+    413: {
+        "description": "Request Entity Too Large",
+        "content": {
+            "application/json": {
+                "example": {"detail": "The uploaded files are too large. The size should not exceed 5MB."}
+            }
         },
     }
 }
