@@ -4,6 +4,7 @@ from alembic import context
 from application.auth.models import User  # noqa
 from application.friends.models import Friend  # noqa
 from application.notifications.models import FirebaseDeviceToken  # noqa
+from application.storage.models import File, FileType  # noqa
 from config import settings
 from database import Base
 from sqlalchemy import engine_from_config, pool

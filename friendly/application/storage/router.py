@@ -20,11 +20,9 @@ async def create_upload_file(file: UploadFile, user: User = Depends(get_current_
         )
 
     if file.size > settings.FILE_MAX_SIZE_BYTE:
-        converted_size = round(file.size / 1024**2, 2)
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File too large. The maximum allowed size 5MB. Current size -> {converted_size}MB.",
-        )
+        tmp = f"File too large. The maximum allowed size {YOSService.convert_size(settings.FILE_MAX_SIZE_BYTE)}MB. "
+        prepared_str = tmp + f"Current size -> {YOSService.convert_size(file.size)}MB."
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=prepared_str)
 
     link_to_file = await YOSService.save_file(file.filename, user.id, file.file.read(), file.content_type)
     return FileSavedOnCloud(link_to_file=link_to_file)

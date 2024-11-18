@@ -44,3 +44,8 @@ class YOSService:
             await cls.client.__aexit__(None, None, None)
             cls.client = None
             cls.session = None
+
+    @classmethod
+    def convert_size(cls, size: int) -> float:
+        """Переводит размер файла из Байт -> МБ"""
+        return round(size / 1024**2, 2)
