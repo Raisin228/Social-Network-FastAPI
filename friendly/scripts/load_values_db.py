@@ -4,7 +4,6 @@ from os import listdir
 from pathlib import Path
 from typing import Dict, List
 
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from application.storage.models import FileType
 from database import get_async_session
 from sqlalchemy import delete, insert

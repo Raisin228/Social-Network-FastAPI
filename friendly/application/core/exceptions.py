@@ -9,8 +9,10 @@ class DataDoesNotExist(BaseCustomException):
         super().__init__(msg)
 
 
-class SuchDeviceTokenAlreadyExist(BaseCustomException):
+class InvalidAccessRights(BaseCustomException):
     def __init__(
-        self, msg: str = "The token is already stored in the database for this device. No need to save it again."
+        self,
+        msg: str = "You cannot interact with the resource. Maybe if you ask the system administrator nicely, \
+                 you’ll get permission.",
     ):
         super().__init__(msg)

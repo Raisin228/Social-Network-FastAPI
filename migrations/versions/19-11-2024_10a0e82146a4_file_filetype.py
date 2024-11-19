@@ -1,8 +1,8 @@
-"""empty message
+"""File | FileType
 
-Revision ID: a908af2235e2
+Revision ID: 10a0e82146a4
 Revises: 1604516de9f0
-Create Date: 2024-11-18 18:55:05.965145
+Create Date: 2024-11-19 20:59:35.755540
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "a908af2235e2"
+revision: str = "10a0e82146a4"
 down_revision: Union[str, None] = "1604516de9f0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -26,6 +26,7 @@ def upgrade() -> None:
         sa.Column("obj_type", sa.String(length=20), nullable=False),
         sa.CheckConstraint("char_length(obj_type) >= 3", name="min_obj_type_len_3"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("obj_type"),
     )
     op.create_table(
         "file",
@@ -39,12 +40,13 @@ def upgrade() -> None:
             server_default=sa.text("TIMEZONE('utc', now())"),
             nullable=False,
         ),
-        sa.Column("type", sa.UUID(), nullable=True),
+        sa.Column("type_id", sa.UUID(), nullable=True),
         sa.Column("size", sa.Integer(), nullable=False),
         sa.CheckConstraint("char_length(name) >= 6", name="min_file_name_len_6"),
         sa.ForeignKeyConstraint(["owner_id"], ["user.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["type"], ["fileType.id"], ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(["type_id"], ["fileType.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("s3_path"),
     )
     # ### end Alembic commands ###
 

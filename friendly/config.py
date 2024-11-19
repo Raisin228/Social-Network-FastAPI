@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     AWS_ENDPOINT_URL: str = Field(min_length=1)
     AWS_BUCKET_NAME: str = Field(min_length=1)
 
-    FILE_MAX_SIZE_BYTE: int = 1024 * 1024 * 10  # 20MB
+    FILE_MAX_SIZE_BYTE: int = 1024 * 1024 * 20  # 20MB
     ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/png", "image/gif"]
     ALLOWED_FILE_TYPES: List[str] = ["video/mp4", "audio/mpeg"]
 

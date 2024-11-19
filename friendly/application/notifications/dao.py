@@ -1,7 +1,8 @@
 from typing import Dict, List, Tuple, Union
 from uuid import UUID
 
-from application.core.exceptions import DataDoesNotExist, SuchDeviceTokenAlreadyExist
+from application.core.exceptions import DataDoesNotExist
+from application.notifications.exceptions import SuchDeviceTokenAlreadyExist
 from application.notifications.models import (
     FirebaseDeviceToken,
     Notification,

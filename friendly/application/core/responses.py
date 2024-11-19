@@ -71,7 +71,7 @@ REQUEST_ENTITY_TOO_LARGE = {
         "description": "Request Entity Too Large",
         "content": {
             "application/json": {
-                "example": {"detail": "The uploaded files are too large. The size should not exceed 5MB."}
+                "example": {"detail": "The uploaded files are too large. The size should not exceed 20MB."}
             }
         },
     }

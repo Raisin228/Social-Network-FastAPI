@@ -29,6 +29,7 @@ flower = "^2.0.1"
 sqladmin = "^0.20.1"
 aiobotocore = "^2.15.2"
 python-multipart = "^0.0.17"
+flake8 = "^7.1.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"
@@ -36,7 +37,6 @@ pytest-asyncio = "^0.24.0"
 pytest-cov = "^5.0.0"
 black = "^24.8.0"
 isort = "^5.13.2"
-flake8 = "^7.1.1"
 pre-commit = "^3.8.0"
 fakeredis = "^2.26.1"
 

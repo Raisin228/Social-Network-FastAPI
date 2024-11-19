@@ -3,9 +3,10 @@ from uuid import UUID
 
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
-from application.core.exceptions import DataDoesNotExist, SuchDeviceTokenAlreadyExist
+from application.core.exceptions import DataDoesNotExist
 from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from application.notifications.dao import FirebaseDeviceTokenDao, NotificationDao
+from application.notifications.exceptions import SuchDeviceTokenAlreadyExist
 from application.notifications.request_body import DeviceTokenFCM
 from application.notifications.schemas import (
     FCMTokenSavedSuccess,

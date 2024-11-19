@@ -1,5 +1,5 @@
-from application.core.exceptions import SuchDeviceTokenAlreadyExist
 from application.core.responses import BAD_REQUEST, SUCCESS
+from application.notifications.exceptions import SuchDeviceTokenAlreadyExist
 from httpx import AsyncClient
 from utils import get_token_need_type
 
