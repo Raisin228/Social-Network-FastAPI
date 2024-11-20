@@ -9,6 +9,9 @@ taskkill /PID <PID> /F - завершаем его
 Запуск pre-commit
 `pre-commit run -a`
 
+Вшить стандартные данные в DB  
+`python .\scripts\load_values_db.py`
+
 Запуск Celery Worker   
 `celery -A task_queue.__init__:celery worker --loglevel=INFO --pool=solo`
 Запуск Flower

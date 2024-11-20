@@ -1,15 +1,21 @@
 import asyncio
+import os
+import sys
 from json import loads
 from os import listdir
 from pathlib import Path
 from typing import Dict, List
 
-from application.storage.models import FileType
-from database import get_async_session
-from sqlalchemy import delete, insert
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../friendly/")))
+
+from database import get_async_session  # noqa
+from sqlalchemy import delete, insert  # noqa
+
+from friendly.application.storage.models import FileType  # noqa
 
 current_dir: Path = Path(__file__).parent
-path_seed_data: Path = (current_dir / "../../seed_data").resolve()
+path_seed_data: Path = (current_dir / "../seed_data").resolve()
 
 
 def read_file(file_path: str) -> List[Dict]:
@@ -41,5 +47,3 @@ async def load_data_in_db():
 
 
 asyncio.run(load_data_in_db())
-
-# TODO папка со скриптами должна бы быть в корне проекта а не рядом с исходниками

@@ -4,8 +4,6 @@ from uuid import UUID
 import aiobotocore.session
 from config import settings
 
-# TODO реализовать сжатие изображений (без потери качества)
-
 
 class YOSService:
     session: Union[aiobotocore.session.AioSession, None] = None
@@ -34,12 +32,19 @@ class YOSService:
 
     @classmethod
     async def save_file(cls, file_name: str, user_id: UUID, file: bytes, file_type: str) -> str:
+        """Сохранить файл в облаке"""
         path_to_file = f"{user_id}/{file_name}"
         await cls.client.put_object(Bucket=settings.AWS_BUCKET_NAME, Key=path_to_file, Body=file, ContentType=file_type)
         return f"{settings.AWS_ENDPOINT_URL}/{settings.AWS_BUCKET_NAME}/{path_to_file}"
 
     @classmethod
-    async def close_resources(cls):
+    async def remove_file(cls, usr_id: UUID, f_name: str) -> None:
+        """Удалить файл с YOS"""
+        path_to_file = f"{usr_id}/{f_name}"
+        await cls.client.delete_object(Bucket=settings.AWS_BUCKET_NAME, Key=path_to_file)
+
+    @classmethod
+    async def close_resources(cls) -> None:
         if cls.client is not None:
             await cls.client.__aexit__(None, None, None)
             cls.client = None
@@ -49,3 +54,7 @@ class YOSService:
     def convert_size(cls, size: int) -> float:
         """Переводит размер файла из Байт -> МБ"""
         return round(size / 1024**2, 2)
+
+
+# TODO реализовать сжатие изображений (без потери качества)
+# TODO добавить логи (писать в отдельный файл для S3)
