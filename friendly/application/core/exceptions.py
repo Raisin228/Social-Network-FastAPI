@@ -12,7 +12,7 @@ class DataDoesNotExist(BaseCustomException):
 class InvalidAccessRights(BaseCustomException):
     def __init__(
         self,
-        msg: str = "You cannot interact with the resource. Maybe if you ask the system administrator nicely, \
-                 you’ll get permission.",
+        msg: str = "You cannot interact with the resource. Maybe if you ask the system administrator nicely, "
+        "you’ll get permission.",
     ):
         super().__init__(msg)
