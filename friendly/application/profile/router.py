@@ -44,7 +44,7 @@ async def change_profile(
     except DataDoesNotExist as ex:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ex.msg)
     except sqlalchemy.exc.IntegrityError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="user with this nickname already exists")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="user with this nickname already exists")
 
 
 @router.delete("/delete_account", response_model=AccountDeleted, responses=FORBIDDEN | UNAUTHORIZED)

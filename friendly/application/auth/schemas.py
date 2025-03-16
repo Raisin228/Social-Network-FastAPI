@@ -27,6 +27,7 @@ class BasicUserFields(Email):
     """Основные поля пользовательского аккаунта"""
 
     id: uuid.UUID
+    is_admin: bool = Field(examples=["false"], description="Is the user an administrator?", default=False)
 
 
 class GetUser(BasicUserFields, AdditionalProfileInfo):

@@ -14,7 +14,7 @@ alembic = "^1.13.2"
 pydantic-settings = "^2.4.0"
 psycopg = "^3.2.1"
 psycopg-binary = "^3.2.1"
-asyncpg = "^0.29.0"
+asyncpg = "0.30.0"
 passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 python-jose = "^3.3.0"
 bcrypt = "4.0.1"
@@ -30,6 +30,7 @@ sqladmin = "^0.20.1"
 aiobotocore = "^2.15.2"
 python-multipart = "^0.0.17"
 flake8 = "^7.1.1"
+greenlet = "^3.1.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.2"

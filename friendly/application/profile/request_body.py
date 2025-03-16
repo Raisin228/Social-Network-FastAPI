@@ -27,7 +27,7 @@ class MinUserInformation(BaseModel):
 class AdditionalProfileInfo(MinUserInformation):
     """Параметры запроса при редактировании профиля"""
 
-    sex: Literal["Man", "Woman"] | None = Field(examples=["Man"], description="User's gender", default=None)
+    sex: Literal["Male", "Female"] | None = Field(examples=["Male"], description="User's gender", default=None)
 
     @field_validator("birthday")
     @classmethod

@@ -1,4 +1,5 @@
-from typing import List, Tuple
+from datetime import date
+from typing import Any, List, Tuple
 from uuid import UUID
 
 from application.auth.dao import UserDao
@@ -32,7 +33,9 @@ class FriendDao(BaseDAO):
         return bool_expression
 
     @staticmethod
-    def _constructor_select_friends(offset: int, limit: int, friendship_type: str, user: UUID) -> Select[User]:
+    def _constructor_select_friends(
+        offset: int, limit: int, friendship_type: str, user: UUID
+    ) -> Select[tuple[str, Any, str | None, str | None, str, date | None]]:
         """Конструктор select запроса для выбора входящих запросов на дружбу и списка друзей"""
         condition = FriendDao._bool_expression_constructor(friendship_type, user)
         join_condition = Friend.user_id == User.id

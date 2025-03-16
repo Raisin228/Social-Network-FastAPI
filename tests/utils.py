@@ -23,6 +23,7 @@ rows = [
         "nickname": f"id_{UNIQ_ID}",
         "email": USER_DATA["email"],
         "password": hash_password(USER_DATA["password"]),
+        "is_admin": False
     },
     {
         "id": id_second,
@@ -33,6 +34,7 @@ rows = [
         "nickname": f"id_{id_second}",
         "email": "lambdadev@gmail.com",
         "password": hash_password(USER_DATA["password"]),
+        "is_admin": False
     },
 ]
 

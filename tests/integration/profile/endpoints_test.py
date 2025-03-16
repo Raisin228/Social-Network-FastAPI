@@ -2,10 +2,11 @@ import datetime
 import uuid
 
 from application.auth.dao import UserDao
-from application.core.responses import SUCCESS, UNAUTHORIZED
+from application.core.responses import SUCCESS, BAD_REQUEST
 from auth.hashing_password import hash_password
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from utils import USER_DATA, get_token_need_type
 
 
@@ -24,6 +25,7 @@ class TestProfileAPI:
             "nickname": f"id_{_create_standard_user.id}",
             "first_name": _create_standard_user.first_name,
             "last_name": _create_standard_user.last_name,
+            "is_admin": False
         }
 
     async def test_change_profile_with_correct_data(self, _create_standard_user, get_access_token, ac: AsyncClient):
@@ -32,7 +34,7 @@ class TestProfileAPI:
             "first_name": "Jason",
             "last_name": "Jr. Borne",
             "birthday": "2004-10-29",
-            "sex": "Man",
+            "sex": "Male",
             "nickname": "bog_at_04",
         }
         result = await ac.patch(
@@ -48,6 +50,7 @@ class TestProfileAPI:
             "nickname": new_data["nickname"],
             "first_name": new_data["first_name"],
             "last_name": new_data["last_name"],
+            "is_admin": False
         }
 
     async def test_change_nickname_which_occupied(
@@ -70,7 +73,7 @@ class TestProfileAPI:
             json={"nickname": "some_interest_nick"},
         )
 
-        assert response.status_code == list(UNAUTHORIZED.keys())[0]
+        assert response.status_code == list(BAD_REQUEST.keys())[0]
         assert response.json() == {"detail": "user with this nickname already exists"}
         await UserDao.delete_by_filter(session, {"id": id_fake_user})
 
@@ -92,5 +95,6 @@ class TestProfileAPI:
                 "first_name": _create_standard_user.first_name,
                 "last_name": _create_standard_user.last_name,
                 "nickname": f"id_{_create_standard_user.id}",
+                "is_admin": False
             },
         }

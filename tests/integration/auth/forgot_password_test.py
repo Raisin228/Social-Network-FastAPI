@@ -45,6 +45,7 @@ class TestForgotPassword:
             "id": str(_create_standard_user.id),
             "email": _create_standard_user.email,
             "msg": "User's password successfully updated",
+            "is_admin": False
         }
         await session.refresh(_create_standard_user)
         assert verify_password("uX8Tjtj_Xw", _create_standard_user.password)
