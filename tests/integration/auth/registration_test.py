@@ -24,7 +24,7 @@ class TestRegistrationUser:
                 "last_name": None,
                 "birthday": None,
                 "sex": None,
-                "is_admin": False
+                "is_admin": False,
             },
         }
         assert _mock_send_mail.called

@@ -2,11 +2,10 @@ import datetime
 import uuid
 
 from application.auth.dao import UserDao
-from application.core.responses import SUCCESS, BAD_REQUEST
+from application.core.responses import BAD_REQUEST, SUCCESS
 from auth.hashing_password import hash_password
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from utils import USER_DATA, get_token_need_type
 
 
@@ -25,7 +24,7 @@ class TestProfileAPI:
             "nickname": f"id_{_create_standard_user.id}",
             "first_name": _create_standard_user.first_name,
             "last_name": _create_standard_user.last_name,
-            "is_admin": False
+            "is_admin": False,
         }
 
     async def test_change_profile_with_correct_data(self, _create_standard_user, get_access_token, ac: AsyncClient):
@@ -50,7 +49,7 @@ class TestProfileAPI:
             "nickname": new_data["nickname"],
             "first_name": new_data["first_name"],
             "last_name": new_data["last_name"],
-            "is_admin": False
+            "is_admin": False,
         }
 
     async def test_change_nickname_which_occupied(
@@ -95,6 +94,6 @@ class TestProfileAPI:
                 "first_name": _create_standard_user.first_name,
                 "last_name": _create_standard_user.last_name,
                 "nickname": f"id_{_create_standard_user.id}",
-                "is_admin": False
+                "is_admin": False,
             },
         }

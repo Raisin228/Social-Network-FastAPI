@@ -1,4 +1,5 @@
 friendly-firebase-adminsdk.json
+*.rdb
 
 venv/
 .idea

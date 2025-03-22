@@ -3,6 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from application.auth.models import User  # noqa
 from application.friends.models import Friend  # noqa
+from application.news.models import News, NewsFiles  # noqa
 from application.notifications.models import FirebaseDeviceToken  # noqa
 from application.storage.models import File, FileType  # noqa
 from config import settings

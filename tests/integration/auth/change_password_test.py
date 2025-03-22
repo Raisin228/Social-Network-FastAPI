@@ -28,7 +28,7 @@ class TestChangePassword:
             "msg": "User's password successfully updated",
             "id": str(_create_standard_user.id),
             "email": _create_standard_user.email,
-            "is_admin": False
+            "is_admin": False,
         }
 
         await session.refresh(_create_standard_user)

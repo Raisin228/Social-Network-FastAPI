@@ -8,9 +8,8 @@ Create Date: 2025-03-16 12:51:19.742765
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "4f691a15dab3"
@@ -25,9 +24,7 @@ def upgrade() -> None:
         "fileType",
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("obj_type", sa.String(length=20), nullable=False),
-        sa.CheckConstraint(
-            "char_length(obj_type) >= 3", name="min_obj_type_len_3"
-        ),
+        sa.CheckConstraint("char_length(obj_type) >= 3", name="min_obj_type_len_3"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("obj_type"),
     )
@@ -41,20 +38,14 @@ def upgrade() -> None:
         sa.Column("nickname", sa.String(length=39), nullable=False),
         sa.Column("email", sa.String(length=100), nullable=False),
         sa.Column("password", sa.String(length=60), nullable=False),
-        sa.Column(
-            "is_admin", sa.Boolean(), server_default="false", nullable=False
-        ),
+        sa.Column("is_admin", sa.Boolean(), server_default="false", nullable=False),
         sa.CheckConstraint(
             "birthday >= DATE '1900-01-01' AND birthday <= CURRENT_DATE",
             name="check_birthday_1900",
         ),
         sa.CheckConstraint("sex IN ('Male', 'Female')", name="check_gender"),
-        sa.CheckConstraint(
-            "char_length(first_name) >= 2", name="min_first_name_len_2"
-        ),
-        sa.CheckConstraint(
-            "char_length(nickname) >= 5", name="min_nick_len_5"
-        ),
+        sa.CheckConstraint("char_length(first_name) >= 2", name="min_first_name_len_2"),
+        sa.CheckConstraint("char_length(nickname) >= 5", name="min_nick_len_5"),
         sa.CheckConstraint(
             "char_length(password) >= 6 OR char_length(password) = 0",
             name="min_pass_len_6",
@@ -77,13 +68,9 @@ def upgrade() -> None:
         ),
         sa.Column("type_id", sa.UUID(), nullable=True),
         sa.Column("size", sa.Integer(), nullable=False),
-        sa.CheckConstraint(
-            "char_length(name) >= 6", name="min_file_name_len_6"
-        ),
+        sa.CheckConstraint("char_length(name) >= 6", name="min_file_name_len_6"),
         sa.ForeignKeyConstraint(["owner_id"], ["user.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(
-            ["type_id"], ["fileType.id"], ondelete="SET NULL"
-        ),
+        sa.ForeignKeyConstraint(["type_id"], ["fileType.id"], ondelete="SET NULL"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("s3_path"),
     )
@@ -92,12 +79,8 @@ def upgrade() -> None:
         sa.Column("id", sa.UUID(), nullable=False),
         sa.Column("holder_id", sa.UUID(), nullable=False),
         sa.Column("device_token", sa.String(length=256), nullable=False),
-        sa.CheckConstraint(
-            "char_length(device_token) >= 140", name="min_device_token_len_140"
-        ),
-        sa.ForeignKeyConstraint(
-            ["holder_id"], ["user.id"], ondelete="CASCADE"
-        ),
+        sa.CheckConstraint("char_length(device_token) >= 140", name="min_device_token_len_140"),
+        sa.ForeignKeyConstraint(["holder_id"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_table(
@@ -110,13 +93,9 @@ def upgrade() -> None:
             server_default="NOT_APPROVE",
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(
-            ["friend_id"], ["user.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["friend_id"], ["user.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["user_id"], ["user.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint(
-            "user_id", "friend_id", name="pk_user_id_friend_id"
-        ),
+        sa.PrimaryKeyConstraint("user_id", "friend_id", name="pk_user_id_friend_id"),
     )
     op.create_index(
         "uq_user_id_friend_id_permuted",
@@ -150,9 +129,7 @@ def upgrade() -> None:
             "created_at >= DATE '1900-01-01' AND created_at <= CURRENT_TIMESTAMP",
             name="check_created_at_1900",
         ),
-        sa.ForeignKeyConstraint(
-            ["recipient"], ["user.id"], ondelete="CASCADE"
-        ),
+        sa.ForeignKeyConstraint(["recipient"], ["user.id"], ondelete="CASCADE"),
         sa.ForeignKeyConstraint(["sender"], ["user.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
