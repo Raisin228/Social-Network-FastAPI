@@ -23,7 +23,7 @@ async def make_test_notification(usr, sess: AsyncSession, status: str = "UNREAD"
         "message": msg_info,
         "status": status,
     }
-    temp = await NotificationDao.add_one(sess, prepared_data)
+    temp = await NotificationDao.add(sess, prepared_data)
     saved_notify = {
         key: str(value) if key in ["sender", "recipient", "id"] else value for key, value in temp.to_dict().items()
     }

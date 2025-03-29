@@ -18,4 +18,4 @@ async def get_two_users(first_standard_user, session: AsyncSession) -> Tuple[Dic
     """Получить 2х пользователей для тестов."""
     usr = first_standard_user.to_dict()
     usr.pop("password")
-    return usr, (await UserDao.add_one(session, rows[1])).to_dict()
+    return usr, (await UserDao.add(session, rows[1])).to_dict()

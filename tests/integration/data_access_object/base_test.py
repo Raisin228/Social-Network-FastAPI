@@ -42,14 +42,14 @@ class TestFindByFilter:
 class TestAddOne:
     async def test_row(self, session: AsyncSession):
         """Тест. Вставка строки в бд"""
-        value = await BaseDAO.add_one(session, rows[0])
+        value = await BaseDAO.add(session, rows[0])
         assert value.to_dict() == User(**rows[0]).to_dict()
 
     async def test_duplicate_values(self, _create_standard_user, session: AsyncSession):
         """Тест. Добавление повторяющихся данных в уникальное поле"""
         with pytest.raises((IntegrityError, DBAPIError)):
             try:
-                await BaseDAO.add_one(session, rows[0])
+                await BaseDAO.add(session, rows[0])
             except Exception as e:
                 await session.rollback()
                 raise e

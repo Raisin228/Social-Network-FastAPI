@@ -21,3 +21,21 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """Генератор асинхронных подключений к бд (сессий)"""
     async with session_factory() as session:
         yield session
+
+
+class Transaction:
+    def __init__(self):
+        self.session: AsyncSession | None = None
+
+    async def __aenter__(self):
+        self.session = session_factory()
+        self.session = await self.session.__aenter__()
+        await self.session.begin()
+        return self.session
+
+    async def __aexit__(self, exception_type, exception, traceback):
+        if exception:
+            await self.session.rollback()
+        else:
+            await self.session.commit()
+        await self.session.__aexit__(exception_type, exception, traceback)

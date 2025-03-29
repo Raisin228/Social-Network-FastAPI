@@ -57,7 +57,7 @@ class TestProfileAPI:
     ):
         """Пользователь меняет ник на уже существующий в системе"""
         id_fake_user = uuid.uuid4()
-        await UserDao.add_one(
+        await UserDao.add(
             session,
             {
                 "id": str(id_fake_user),

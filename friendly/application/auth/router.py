@@ -37,7 +37,7 @@ from auth.google_oauth import get_data_from_authorize_token, oauth
 from auth.hashing_password import hash_password
 from auth.yandex_oauth import change_code_to_access_token, change_token_to_user_info
 from config import settings
-from database import get_async_session
+from database import Transaction, get_async_session
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from mail.mail_sender import send_mail
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -47,26 +47,31 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post("/registration", summary="Register new user", responses=CONFLICT, response_model=UserRegister)
-async def register_user(user_data: UserRegistrationData, session: AsyncSession = Depends(get_async_session)):
+async def register_user(user_data: UserRegistrationData):
     """Регистрация пользователя по логину и паролю"""
     email = {"email": user_data.email}
-    if await UserDao.find_by_filter(session, email):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="User with that email already exist",
-        )
+
+    async with Transaction() as session:
+        if await UserDao.find_by_filter(session, email):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User with that email already exist",
+            )
 
     user_data = dict(user_data)
     temp = uuid.uuid4()
     user_data["id"] = temp
     user_data["nickname"] = f"id_{temp}"
     user_data["password"] = hash_password(user_data["password"])
-    result = await UserDao.add_one(session, user_data)
-    response = UserRegister(msg="Account successfully created", detail=GetUser(**result.to_dict()))
+
+    async with Transaction() as session:
+        result = await UserDao.add(session, user_data)
+        d_res = result.to_dict()
+        response = UserRegister(msg="Account successfully created", detail=GetUser(**d_res))
 
     send_mail.delay(
         user_data["email"],
-        {"user_email": result.email, "user_nick": result.nickname},
+        {"user_email": d_res["email"], "user_nick": d_res["nickname"]},
         "Registration was successful",
         "welcome.html",
     )
@@ -170,26 +175,27 @@ async def redirect_google_auth_server(request: Request):
 @router.get(
     "/callback/google", name="callback", response_model=TokensInfo, responses=BAD_REQUEST, include_in_schema=False
 )
-async def auth(request: Request, session: AsyncSession = Depends(get_async_session)):
+async def auth(request: Request):
     """Google OAuth Callback. Замечание: не требуется вызывать напрямую"""
     user_data = await get_data_from_authorize_token(request)
     if user_data is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization failed or was canceled.")
 
-    is_user_exist = await UserDao.find_by_filter(session, {"email": user_data.get("email")})
-    if is_user_exist is None:
-        temp = uuid.uuid4()
-        new_user = {
-            "id": temp,
-            "nickname": f"id_{temp}",
-            "email": user_data.get("email"),
-            "first_name": user_data.get("given_name"),
-            "last_name": user_data.get("family_name"),
-            "password": "",
-        }
-        result = await UserDao.add_one(session, new_user)
+    async with Transaction() as session:
+        is_user_exist = await UserDao.find_by_filter(session, {"email": user_data.get("email")})
+        if is_user_exist is None:
+            temp = uuid.uuid4()
+            new_user = {
+                "id": temp,
+                "nickname": f"id_{temp}",
+                "email": user_data.get("email"),
+                "first_name": user_data.get("given_name"),
+                "last_name": user_data.get("family_name"),
+                "password": "",
+            }
+            result = await UserDao.add(session, new_user)
 
-        return generate_tokens_pair({"user_id": str(result.id)})
+            return generate_tokens_pair({"user_id": str(result.id)})
     return generate_tokens_pair({"user_id": str(is_user_exist["id"])})
 
 
@@ -221,7 +227,7 @@ async def redirect_yandex_auth_server(request: Request):
     response_model=TokensInfo,
     responses=BAD_REQUEST,
 )
-async def ydex_auth(request: Request, session: AsyncSession = Depends(get_async_session)):
+async def ydex_auth(request: Request):
     """Yandex OAuth Callback. !Не требуется вызывать напрямую!"""
     code = request.query_params.get("code")
     if not code:
@@ -231,20 +237,21 @@ async def ydex_auth(request: Request, session: AsyncSession = Depends(get_async_
     if user_data is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Authorization failed or was canceled.")
 
-    is_user_exist = await UserDao.find_by_filter(session, {"email": user_data.get("default_email")})
-    if is_user_exist is None:
-        temp = uuid.uuid4()
-        new_user = {
-            "id": temp,
-            "nickname": f"id_{temp}",
-            "email": user_data.get("default_email"),
-            "first_name": user_data.get("first_name"),
-            "last_name": user_data.get("last_name"),
-            "password": "",
-        }
-        result = await UserDao.add_one(session, new_user)
+    async with Transaction() as session:
+        is_user_exist = await UserDao.find_by_filter(session, {"email": user_data.get("default_email")})
+        if is_user_exist is None:
+            temp = uuid.uuid4()
+            new_user = {
+                "id": temp,
+                "nickname": f"id_{temp}",
+                "email": user_data.get("default_email"),
+                "first_name": user_data.get("first_name"),
+                "last_name": user_data.get("last_name"),
+                "password": "",
+            }
+            result = await UserDao.add(session, new_user)
 
-        return generate_tokens_pair({"user_id": str(result.id)})
+            return generate_tokens_pair({"user_id": str(result.id)})
     return generate_tokens_pair({"user_id": str(is_user_exist["id"])})
 
 

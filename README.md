@@ -14,7 +14,7 @@
 `lsof -i :<PID>` - смотрим какие процессы зажали порт
 `kill -9 <PID>` - убиваем процесс
 ---
-Запуск тестов -> `poetry run pytest tests/`  
+Запуск тестов (cd friendly) -> `poetry run pytest ../tests/`  
 Проверка кода на покрытие тестами -> `poetry run pytest --cov .`  
 Преобразовать файлик .coverage в удобочитаемый отчёт -> `coverage html`  
 ---  

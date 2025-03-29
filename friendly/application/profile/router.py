@@ -9,7 +9,7 @@ from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTH
 from application.profile.dao import ProfileDao
 from application.profile.request_body import AdditionalProfileInfo
 from application.profile.schemas import AccountDeleted
-from database import get_async_session
+from database import Transaction, get_async_session
 from fastapi import APIRouter, Depends, HTTPException, Request
 from redis_service import RedisService
 from starlette import status
@@ -48,9 +48,10 @@ async def change_profile(
 
 
 @router.delete("/delete_account", response_model=AccountDeleted, responses=FORBIDDEN | UNAUTHORIZED)
-async def delete_profile(user: User = Depends(get_current_user_access_token), session=Depends(get_async_session)):
+async def delete_profile(user: User = Depends(get_current_user_access_token)):
     """Удалить свою учётную запись"""
-    deleted_account = await ProfileDao.delete_by_filter(session, {"id": str(user.id)})
+    async with Transaction() as session:
+        deleted_account = await ProfileDao.delete_by_filter(session, {"id": str(user.id)})
     deleted_account = deleted_account[0]
 
     columns = [column for column in User.get_column_names()]

@@ -22,7 +22,7 @@ from application.friends.schemas import (
     IncomeRequests,
     UserBlockUnblock,
 )
-from database import get_async_session
+from database import Transaction, get_async_session
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from firebase.notification import (
     NotificationEvent,
@@ -115,11 +115,12 @@ async def view_entire_appeal(
 async def approve_friend_request(
     friend_id: UUID,
     user: User = Depends(get_current_user_access_token),
-    session: AsyncSession = Depends(get_async_session),
 ):
     """Принять входящий запрос на дружбу"""
     try:
-        res = await FriendDao.approve_friend_appeal(user, friend_id, session)
+        # print(f"->$ some")
+        async with Transaction() as session:
+            res = await FriendDao.approve_friend_appeal(user, friend_id, session)
     except DataDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="There is no active friendship application")
     except NotApproveAppeal as ex:

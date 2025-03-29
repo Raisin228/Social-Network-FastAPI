@@ -39,7 +39,7 @@ class FileDao(BaseDAO):
         search_param = {"owner_id": u_id, "name": file.filename, "s3_path": link_to}
         is_exist_row = await FileDao.find_by_filter(session, search_param)
         if is_exist_row is None:
-            return await FileDao.add_one(
+            return await FileDao.add(
                 session,
                 {"owner_id": u_id, "name": file.filename, "s3_path": link_to, "type_id": model_type, "size": file.size},
             )

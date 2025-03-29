@@ -51,7 +51,7 @@ async def get_tokens_and_add_notify(s: Dict, r_id: UUID, title: str, body: str) 
         recipient_devices = await FirebaseDeviceTokenDao.user_tokens(session, r_id)
 
         data = {"sender": s.get("id"), "recipient": r_id, "title": title, "message": body}
-        await NotificationDao.add_one(session, data)
+        await NotificationDao.add(session, data)
     return recipient_devices
 
 

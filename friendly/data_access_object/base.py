@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 from application.core.exceptions import DataDoesNotExist
 from sqlalchemy import delete, insert, select, update
@@ -9,7 +9,7 @@ class BaseDAO:
     model = None
 
     @classmethod
-    async def find_by_filter(cls, session: AsyncSession, find_by: dict | None = None) -> None | Dict | List[Dict]:
+    async def find_by_filter(cls, session: AsyncSession, find_by: Union[Dict, None] = None) -> None | Dict | List[Dict]:
         """Поиск по фильтрам или получить все записи"""
         query = select(cls.model).filter_by(**find_by)
         data = await session.execute(query)
@@ -23,15 +23,43 @@ class BaseDAO:
         return result
 
     @classmethod
-    async def add_one(cls, session: AsyncSession, values: dict) -> model:
-        """Добавить один объект"""
-        stmt = insert(cls.model).values(**values).returning(cls.model.id)
-        col_id = await session.execute(stmt)
-        await session.commit()
+    async def add(cls, session: AsyncSession, values: Union[Dict, List[Dict]]) -> Union[model, List[model]]:
+        """
+        Adds one or multiple objects to the database.
 
-        query = select(cls.model).where(cls.model.id == col_id.scalar())
+        If a single dictionary is provided, inserts one record.
+        If a list of dictionaries is provided, performs a bulk insert.
+
+        Args:
+            session (AsyncSession): The SQLAlchemy async session.
+            values (Union[Dict, List[Dict]]):
+                - A dictionary with field values for inserting a single object.
+                - A list of dictionaries for bulk insertion.
+
+        Returns:
+            Union[model, List[model]]:
+                - A single model instance if one object is inserted.
+                - A list of model instances if multiple objects are inserted.
+
+        Raises:
+            SQLAlchemyError: If the database operation fails.
+        """
+        # если пришли пустые данные на вставку - возвращаем []
+        if not values or all(not d for d in values):
+            return []
+
+        if isinstance(values, dict):
+            values = [values]
+
+        stmt = insert(cls.model).values(values).returning(cls.model.id)
+        result = await session.execute(stmt)
+
+        inserted_ids = result.scalars().all()
+        query = select(cls.model).where(cls.model.id.in_(inserted_ids))
         result = await session.execute(query)
-        return result.scalar_one_or_none()
+
+        models = result.scalars().all()
+        return models if len(models) > 1 else models[0]
 
     @classmethod
     async def update_row(cls, session: AsyncSession, new_data: dict, filter_parameters: dict) -> List[Tuple]:

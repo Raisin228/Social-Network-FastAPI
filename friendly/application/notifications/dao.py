@@ -21,7 +21,7 @@ class FirebaseDeviceTokenDao(BaseDAO):
         """Добавить токен (идентификатор) устройства в бд"""
         device_for_user = await FirebaseDeviceTokenDao.find_by_filter(session, {"device_token": token})
         if device_for_user is None:
-            return await FirebaseDeviceTokenDao.add_one(session, {"holder_id": user_id, "device_token": token})
+            return await FirebaseDeviceTokenDao.add(session, {"holder_id": user_id, "device_token": token})
         raise SuchDeviceTokenAlreadyExist()
 
     @classmethod

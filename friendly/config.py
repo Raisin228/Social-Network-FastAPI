@@ -42,7 +42,7 @@ class Settings(BaseSettings):
     ALLOWED_IMAGE_TYPES: List[str] = ["image/jpeg", "image/png", "image/gif"]
     ALLOWED_FILE_TYPES: List[str] = ["video/mp4", "audio/mpeg"]
 
-    FIREBASE_CONFIG_FILE: str = "../friendly-firebase-adminsdk.json"
+    FIREBASE_CONFIG_FILE: str = "./friendly-firebase-adminsdk.json"
 
     REDIS_URL: str = Field(min_length=1)
 
