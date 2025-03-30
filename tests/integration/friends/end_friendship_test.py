@@ -16,7 +16,7 @@ class TestEndFriendshipWithUser:
         self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
     ):
         """Тест. Удаляем пользователя из списка друзей"""
-        store = await get_two_users(_create_standard_user, session)
+        store = await get_two_users(_create_standard_user)
         await FriendDao.friend_request(
             session,
             {"user_id": store[0].get("id"), "friend_id": store[1].get("id"), "relationship_type": Relations.FRIEND},

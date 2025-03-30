@@ -13,10 +13,10 @@ from utils import get_token_need_type
 
 class TestBlockingUser:
     async def test_add_blacklist_foreign(
-        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
+        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient
     ):
         """Тест. Добавить пользователя в blacklist, с которым мы не имеем записей"""
-        store = await get_two_users(_create_standard_user, session)
+        store = await get_two_users(_create_standard_user)
 
         resp = await ac.put(
             f"/users/ban_user/{store[1].get('id')}",
@@ -35,7 +35,7 @@ class TestBlockingUser:
         self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
     ):
         """Тест. Блокируем знакомого (уже есть запись в Friend)"""
-        store = await get_two_users(_create_standard_user, session)
+        store = await get_two_users(_create_standard_user)
         await FriendDao.friend_request(
             session,
             {"user_id": store[1].get("id"), "friend_id": store[0].get("id"), "relationship_type": Relations.FRIEND},
@@ -50,7 +50,7 @@ class TestBlockingUser:
 
     async def test_already_block_by_this_user(self, _create_standard_user, ac: AsyncClient, session: AsyncSession):
         """Тест. Пользователь, которого мы хотим блокнуть уже это сделал"""
-        store = await get_two_users(_create_standard_user, session)
+        store = await get_two_users(_create_standard_user)
         await FriendDao.friend_request(
             session,
             {"user_id": store[1].get("id"), "friend_id": store[0].get("id"), "relationship_type": Relations.BLOCKED},
@@ -67,7 +67,7 @@ class TestBlockingUser:
         self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
     ):
         """Тест. Разблокировать пользователя из чёрного списка"""
-        store = await get_two_users(_create_standard_user, session)
+        store = await get_two_users(_create_standard_user)
         await FriendDao.friend_request(
             session,
             {"user_id": store[0].get("id"), "friend_id": store[1].get("id"), "relationship_type": Relations.BLOCKED},

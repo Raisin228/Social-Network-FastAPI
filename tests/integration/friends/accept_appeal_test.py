@@ -4,18 +4,16 @@ from application.core.responses import FORBIDDEN, NOT_FOUND, SUCCESS
 from application.friends.dao import FriendDao
 from application.friends.models import Relations
 from conftest import get_two_users
+from database import Transaction
 from firebase.notification import NotificationEvent, get_notification_message
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_token_need_type
 
 
 class TestApproveFriendRequest:
-    async def test_income_appeal(
-        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
-    ):
+    async def test_income_appeal(self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient):
         """Тест. Принять входящий запрос"""
-        store = await get_two_users(_create_standard_user, session)
+        store = await get_two_users(_create_standard_user)
         await ac.post(
             f'/users/friend/add/{store[0].get("id")}',
             headers={"Authorization": f"Bearer {get_token_need_type(store[1].get('id'))}"},
@@ -43,9 +41,10 @@ class TestApproveFriendRequest:
         assert resp.status_code == list(NOT_FOUND.keys())[0]
         assert resp.json() == {"detail": "There is no active friendship application"}
 
-    async def test_appeal_status_error(self, _create_standard_user, ac: AsyncClient, session: AsyncSession):
+    async def test_appeal_status_error(self, _create_standard_user, ac: AsyncClient):
         """Тест. Статус заявки != NOT_APPROVE. Пользователи либо друзья, либо заблокированы"""
-        store = await get_two_users(_create_standard_user, session)
+        async with Transaction() as session:
+            store = await get_two_users(_create_standard_user)
         await FriendDao.friend_request(
             session,
             {"user_id": store[0].get("id"), "friend_id": store[1].get("id"), "relationship_type": Relations.FRIEND},

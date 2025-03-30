@@ -5,16 +5,15 @@ from application.core.responses import BAD_REQUEST, NOT_FOUND, SUCCESS
 from firebase.notification import NotificationEvent, get_notification_message
 from httpx import AsyncClient
 from integration.friends.conftest import get_two_users
-from sqlalchemy.ext.asyncio import AsyncSession
 from utils import get_token_need_type
 
 
 class TestSendFriendRequest:
     async def test_want_become_friend(
-        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
+        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient
     ):
         """Тест. Отправить запрос на дружбу от пользователя А -> B"""
-        store = await get_two_users(_create_standard_user, session)
+        store = await get_two_users(_create_standard_user)
 
         response = await ac.post(
             f"/users/friend/add/{store[1].get('id')}",
@@ -34,10 +33,10 @@ class TestSendFriendRequest:
         }
 
     async def test_resending_request(
-        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient, session: AsyncSession
+        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient
     ):
         """Тест. Повторная отправка запроса на дружбу"""
-        store = await get_two_users(_create_standard_user, session)
+        store = await get_two_users(_create_standard_user)
 
         await ac.post(
             f"/users/friend/add/{store[1].get('id')}",

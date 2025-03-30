@@ -118,7 +118,6 @@ async def approve_friend_request(
 ):
     """Принять входящий запрос на дружбу"""
     try:
-        # print(f"->$ some")
         async with Transaction() as session:
             res = await FriendDao.approve_friend_appeal(user, friend_id, session)
     except DataDoesNotExist:
