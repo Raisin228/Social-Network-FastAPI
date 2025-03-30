@@ -30,8 +30,10 @@ def get_notification_message(event_type: NotificationEvent, nick: str) -> str:
     """Сообщение для уведомления"""
     notify_event_msg = {
         NotificationEvent.FRIEND_REQUEST: f"Пользователь [{nick}] хочет добавить вас в друзья.",
-        NotificationEvent.APPROVE_APPEAL: f"Пользователь [{nick}] принял ваш запрос. Теперь вы друзья.",
-        NotificationEvent.BLOCK_TERMINATE: f"Пользователь [{nick}] удалил вас из чёрного списка. Начните общение!",
+        NotificationEvent.APPROVE_APPEAL: f"Пользователь [{nick}] принял ваш запрос. "
+        f"Теперь вы друзья.",
+        NotificationEvent.BLOCK_TERMINATE: f"Пользователь [{nick}] удалил вас из чёрного списка."
+        f" Начните общение!",
         NotificationEvent.BAN: f"Пользователь [{nick}] добавил вас в чёрный список.",
         NotificationEvent.END_FRIENDSHIP: f"Пользователь [{nick}] удалил вас из списка друзей",
     }
@@ -40,7 +42,9 @@ def get_notification_message(event_type: NotificationEvent, nick: str) -> str:
 
 def send_notification(device_token: str, title: str, body: str) -> str:
     """Отправить уведомление от A => B"""
-    message = messaging.Message(notification=messaging.Notification(title=title, body=body), token=device_token)
+    message = messaging.Message(
+        notification=messaging.Notification(title=title, body=body), token=device_token
+    )
     return messaging.send(message)
 
 

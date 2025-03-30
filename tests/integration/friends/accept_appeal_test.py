@@ -11,7 +11,9 @@ from utils import get_token_need_type
 
 
 class TestApproveFriendRequest:
-    async def test_income_appeal(self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient):
+    async def test_income_appeal(
+        self, _create_standard_user, _mock_prepare_notification: AsyncMock, ac: AsyncClient
+    ):
         """Тест. Принять входящий запрос"""
         store = await get_two_users(_create_standard_user)
         await ac.post(
@@ -47,7 +49,11 @@ class TestApproveFriendRequest:
             store = await get_two_users(_create_standard_user)
         await FriendDao.friend_request(
             session,
-            {"user_id": store[0].get("id"), "friend_id": store[1].get("id"), "relationship_type": Relations.FRIEND},
+            {
+                "user_id": store[0].get("id"),
+                "friend_id": store[1].get("id"),
+                "relationship_type": Relations.FRIEND,
+            },
         )
 
         resp = await ac.patch(
@@ -56,6 +62,6 @@ class TestApproveFriendRequest:
         )
         assert resp.status_code == list(FORBIDDEN.keys())[0]
         assert resp.json() == {
-            "detail": "The application status is different from NOT_APPEAL. You are either already friends or "
-            "you have been blocked."
+            "detail": "The application status is different from NOT_APPEAL. "
+            "You are either already friends or you have been blocked."
         }

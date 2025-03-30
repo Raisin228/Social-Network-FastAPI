@@ -41,11 +41,19 @@ class FriendDao(BaseDAO):
         join_condition = Friend.user_id == User.id
         if friendship_type == Relations.FRIEND:
             join_condition = case(
-                (Friend.user_id == user, User.id == Friend.friend_id), else_=User.id == Friend.user_id
+                (Friend.user_id == user, User.id == Friend.friend_id),
+                else_=User.id == Friend.user_id,
             )  # pragma: no cover
 
         return (
-            select(Friend.relationship_type, User.id, User.first_name, User.last_name, User.nickname, User.birthday)
+            select(
+                Friend.relationship_type,
+                User.id,
+                User.first_name,
+                User.last_name,
+                User.nickname,
+                User.birthday,
+            )
             .join(User, join_condition)
             .where(condition)
             .order_by(
@@ -53,7 +61,10 @@ class FriendDao(BaseDAO):
                     (User.last_name.isnot(None), User.last_name),
                     (User.last_name.is_(None), null()),
                 ),
-                case((User.first_name.isnot(None), User.first_name), (User.first_name.is_(None), null())),
+                case(
+                    (User.first_name.isnot(None), User.first_name),
+                    (User.first_name.is_(None), null()),
+                ),
                 User.id,
             )
             .offset(offset)
@@ -84,29 +95,45 @@ class FriendDao(BaseDAO):
         return [tuple(note) for note in data]
 
     @classmethod
-    async def approve_friend_appeal(cls, user: User, friend_id: UUID, session: AsyncSession) -> List[Tuple] | Exception:
+    async def approve_friend_appeal(
+        cls, user: User, friend_id: UUID, session: AsyncSession
+    ) -> List[Tuple] | Exception:
         """Принять запрос на дружбу"""
-        user_request_from_him = await FriendDao.find_by_filter(session, {"user_id": friend_id, "friend_id": user.id})
-        usr_request_from_us = await FriendDao.find_by_filter(session, {"user_id": user.id, "friend_id": friend_id})
+        user_request_from_him = await FriendDao.find_by_filter(
+            session, {"user_id": friend_id, "friend_id": user.id}
+        )
+        usr_request_from_us = await FriendDao.find_by_filter(
+            session, {"user_id": user.id, "friend_id": friend_id}
+        )
 
         if (
-            user_request_from_him is not None and user_request_from_him["relationship_type"] != Relations.NOT_APPROVE
-        ) or (usr_request_from_us is not None and usr_request_from_us["relationship_type"] != Relations.NOT_APPROVE):
+            user_request_from_him is not None
+            and user_request_from_him["relationship_type"] != Relations.NOT_APPROVE
+        ) or (
+            usr_request_from_us is not None
+            and usr_request_from_us["relationship_type"] != Relations.NOT_APPROVE
+        ):
             raise NotApproveAppeal()
         elif user_request_from_him is None and usr_request_from_us is None:
             raise DataDoesNotExist
         return await FriendDao.update_row(
-            session, {"relationship_type": Relations.FRIEND}, {"user_id": friend_id, "friend_id": user.id}
+            session,
+            {"relationship_type": Relations.FRIEND},
+            {"user_id": friend_id, "friend_id": user.id},
         )
 
     @classmethod
-    async def end_friendship_with(cls, user: UUID, friend: UUID, session: AsyncSession) -> List[Tuple]:
+    async def end_friendship_with(
+        cls, user: UUID, friend: UUID, session: AsyncSession
+    ) -> List[Tuple]:
         """Удалить друга"""
         expr_to_users = or_(
             and_(Friend.user_id == user, Friend.friend_id == friend),
             and_(Friend.user_id == friend, Friend.friend_id == user),
         )
-        query = select(Friend).where(and_(expr_to_users, Friend.relationship_type == Relations.FRIEND))
+        query = select(Friend).where(
+            and_(expr_to_users, Friend.relationship_type == Relations.FRIEND)
+        )
 
         exec_qe = await session.execute(query)
         is_friends = exec_qe.scalar()
@@ -118,7 +145,9 @@ class FriendDao(BaseDAO):
         return deleted_row
 
     @classmethod
-    async def block_user(cls, session: AsyncSession, user_id: UUID, blocked_user_id: UUID) -> List[Tuple]:
+    async def block_user(
+        cls, session: AsyncSession, user_id: UUID, blocked_user_id: UUID
+    ) -> List[Tuple]:
         """Добавить пользователя в черный список"""
 
         user_order_1 = {"user_id": user_id, "friend_id": blocked_user_id}
@@ -128,7 +157,9 @@ class FriendDao(BaseDAO):
             raise RequestToYourself()
 
         # нельзя заблокировать пользователя если он уже это сделал
-        is_we_block = await FriendDao.find_by_filter(session, {**user_order_2, "relationship_type": Relations.BLOCKED})
+        is_we_block = await FriendDao.find_by_filter(
+            session, {**user_order_2, "relationship_type": Relations.BLOCKED}
+        )
         if is_we_block:
             raise BlockByUser()
 

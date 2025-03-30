@@ -29,7 +29,8 @@ class TestSendFriendRequest:
         assert response.json() == {
             "sender": str(store[0].get("id")),
             "recipient": str(store[1].get("id")),
-            "msg": "The friendship request has been sent. After confirmation, " "you will become friends!",
+            "msg": "The friendship request has been sent. After confirmation, "
+            "you will become friends!",
         }
 
     async def test_resending_request(

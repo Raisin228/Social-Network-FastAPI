@@ -16,7 +16,10 @@ class UserWithFriendStatus(MinUserInformation):
     """Пользователь с мин.информацией и статусом дружбы"""
 
     status: str = Field(
-        examples=["NOT_APPROVE"], description="Current status of the appeal", max_length=11, min_length=6
+        examples=["NOT_APPROVE"],
+        description="Current status of the appeal",
+        max_length=11,
+        min_length=6,
     )
 
 

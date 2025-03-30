@@ -18,7 +18,9 @@ class TestRefreshToken:
         assert response.status_code == list(FORBIDDEN.keys())[0]
         assert response.json() == {"detail": "Not authenticated"}
 
-    async def test_with_provide_access_token_instead_refresh(self, get_access_token: str, ac: AsyncClient):
+    async def test_with_provide_access_token_instead_refresh(
+        self, get_access_token: str, ac: AsyncClient
+    ):
         """В качестве refresh токена был передаётся access"""
         response = await ac.post(
             "/auth/refresh_access_token",

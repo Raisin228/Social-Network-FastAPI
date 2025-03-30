@@ -1,4 +1,4 @@
 [flake8]
 exclude = .git, __pycache__, venv, __init__.py, friendly/application/storage/router.py
-max-line-length = 120
-ignore = E231, W291
+max-line-length = 100
+ignore = E231, W291, W503

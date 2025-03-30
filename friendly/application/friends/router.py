@@ -49,11 +49,14 @@ async def send_friend_request(
 ):
     """Отправить запрос на дружбу"""
     try:
-        result = await FriendDao.friend_request(session, {"user_id": user.id, "friend_id": friend_id})
+        result = await FriendDao.friend_request(
+            session, {"user_id": user.id, "friend_id": friend_id}
+        )
     except IntegrityError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Such a request has already been sent earlier or you have been blocked. Duplicates not allowed.",
+            detail="Such a request has already been sent earlier or you "
+            "have been blocked. Duplicates not allowed.",
         )
     except DataDoesNotExist:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -83,12 +86,23 @@ async def people_user_friends_with(
     temp = user.id if whose_friends_usr_id is None else whose_friends_usr_id
     friends = await FriendDao.get_notes_by_status(Relations.FRIEND, session, offset, limit, temp)
     return [
-        Friend(status=f[0], friend_id=f[1], first_name=f[2], last_name=f[3], nickname=f[4], birthday=f[5])
+        Friend(
+            status=f[0],
+            friend_id=f[1],
+            first_name=f[2],
+            last_name=f[3],
+            nickname=f[4],
+            birthday=f[5],
+        )
         for f in friends
     ]
 
 
-@router.get("/friend/incoming_friend_requests", response_model=List[IncomeRequests], responses=FORBIDDEN | UNAUTHORIZED)
+@router.get(
+    "/friend/incoming_friend_requests",
+    response_model=List[IncomeRequests],
+    responses=FORBIDDEN | UNAUTHORIZED,
+)
 @RedisService.cache_response(ttl=20)
 async def view_entire_appeal(
     _request: Request,
@@ -98,10 +112,17 @@ async def view_entire_appeal(
     session: AsyncSession = Depends(get_async_session),
 ):
     """Получить список всех входящих запросов на дружбу"""
-    res = await FriendDao.get_notes_by_status(Relations.NOT_APPROVE, session, offset, limit, user.id)
+    res = await FriendDao.get_notes_by_status(
+        Relations.NOT_APPROVE, session, offset, limit, user.id
+    )
     return [
         IncomeRequests(
-            status=row[0], sender_id=row[1], first_name=row[2], last_name=row[3], nickname=row[4], birthday=row[5]
+            status=row[0],
+            sender_id=row[1],
+            first_name=row[2],
+            last_name=row[3],
+            nickname=row[4],
+            birthday=row[5],
         )
         for row in res
     ]
@@ -121,7 +142,10 @@ async def approve_friend_request(
         async with Transaction() as session:
             res = await FriendDao.approve_friend_appeal(user, friend_id, session)
     except DataDoesNotExist:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="There is no active friendship application")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="There is no active friendship application",
+        )
     except NotApproveAppeal as ex:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -129,7 +153,9 @@ async def approve_friend_request(
         )
 
     notify_msg = get_notification_message(NotificationEvent.APPROVE_APPEAL, user.nickname)
-    prepare_notification.delay(user.__dict__, friend_id, NotificationEvent.APPROVE_APPEAL, notify_msg)
+    prepare_notification.delay(
+        user.__dict__, friend_id, NotificationEvent.APPROVE_APPEAL, notify_msg
+    )
 
     data = res[0]
     return ApplyFriend(**{"friend_id": data[0]})
@@ -156,27 +182,38 @@ async def ban_annoying_user(
 
         notify_msg = get_notification_message(NotificationEvent.BAN, user.nickname)
         prepare_notification.delay(user.__dict__, ban_user_id, NotificationEvent.BAN, notify_msg)
-        return UserBlockUnblock(**{"msg": "This user has been added to blacklist", "block_user_id": ban_user_id})
+        return UserBlockUnblock(
+            **{"msg": "This user has been added to blacklist", "block_user_id": ban_user_id}
+        )
     except BlockByUser as ex:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail=f"{ex.msg} You can't block someone who blocked you."
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"{ex.msg} You can't block someone who blocked you.",
         )
     except UserUnblocked:
         msg_info = get_notification_message(NotificationEvent.BLOCK_TERMINATE, user.nickname)
-        prepare_notification.delay(user.__dict__, ban_user_id, NotificationEvent.BLOCK_TERMINATE, msg_info)
+        prepare_notification.delay(
+            user.__dict__, ban_user_id, NotificationEvent.BLOCK_TERMINATE, msg_info
+        )
         return UserBlockUnblock(
-            **{"msg": "This user has been removed from the blacklist.", "block_user_id": ban_user_id}
+            **{
+                "msg": "This user has been removed from the blacklist.",
+                "block_user_id": ban_user_id,
+            }
         )
     except RequestToYourself as ex:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=ex.msg)
     except DataDoesNotExist as ex:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"{ex.msg} The user with this ID was not found."
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"{ex.msg} The user with this ID was not found.",
         )
 
 
 @router.delete(
-    "/friend/remove/{friend_id}", response_model=DeleteFriendship, responses=NOT_FOUND | UNAUTHORIZED | FORBIDDEN
+    "/friend/remove/{friend_id}",
+    response_model=DeleteFriendship,
+    responses=NOT_FOUND | UNAUTHORIZED | FORBIDDEN,
 )
 async def end_friendship_with_user(
     friend_id: UUID,
@@ -187,8 +224,12 @@ async def end_friendship_with_user(
     try:
         await FriendDao.end_friendship_with(user.id, friend_id, session)
     except YouNotFriends:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="You aren't friends with the user")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="You aren't friends with the user"
+        )
 
     notify_msg = get_notification_message(NotificationEvent.END_FRIENDSHIP, user.nickname)
-    prepare_notification.delay(user.__dict__, friend_id, NotificationEvent.END_FRIENDSHIP, notify_msg)
+    prepare_notification.delay(
+        user.__dict__, friend_id, NotificationEvent.END_FRIENDSHIP, notify_msg
+    )
     return DeleteFriendship(**{"former_friend_id": friend_id})

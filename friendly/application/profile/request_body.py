@@ -13,9 +13,15 @@ class MinUserInformation(BaseModel):
         examples=["Jason"], description="User's name", default=None, max_length=32, min_length=2
     )
     last_name: str | None = Field(
-        examples=["Jr. Borne"], description="User's surname", default=None, max_length=32, min_length=1
+        examples=["Jr. Borne"],
+        description="User's surname",
+        default=None,
+        max_length=32,
+        min_length=1,
     )
-    birthday: datetime.date | None = Field(examples=["2004-10-29"], description="User's birthday", default=None)
+    birthday: datetime.date | None = Field(
+        examples=["2004-10-29"], description="User's birthday", default=None
+    )
     nickname: str | None = Field(
         examples=["bog_at_04"],
         description="Short name to make it easier to find you or mention you in the entries",
@@ -27,7 +33,9 @@ class MinUserInformation(BaseModel):
 class AdditionalProfileInfo(MinUserInformation):
     """Параметры запроса при редактировании профиля"""
 
-    sex: Literal["Male", "Female"] | None = Field(examples=["Male"], description="User's gender", default=None)
+    sex: Literal["Male", "Female"] | None = Field(
+        examples=["Male"], description="User's gender", default=None
+    )
 
     @field_validator("birthday")
     @classmethod
@@ -47,7 +55,8 @@ class AdditionalProfileInfo(MinUserInformation):
                 raise ValueError(r"numbers and special characters are prohibited")
             elif data.title() != data:
                 raise ValueError(
-                    "all fields must be filled in with a capital letter besides you cannot use multiple capital "
+                    "all fields must be filled in with a capital letter besides you "
+                    "cannot use multiple capital "
                     "letters in one word"
                 )
 
@@ -66,6 +75,10 @@ class AdditionalProfileInfo(MinUserInformation):
         if alphabet1 is not None and alphabet2 is not None and alphabet1[1] != alphabet2[1]:
             raise ValueError("all fields must be filled in the same language")
 
-        if nick is not None and any(map(lambda char: char not in ascii_letters + digits + "_-", nick)):
-            raise ValueError("nickname can only consist of Latin letters, numbers, underscore and dash")
+        if nick is not None and any(
+            map(lambda char: char not in ascii_letters + digits + "_-", nick)
+        ):
+            raise ValueError(
+                "nickname can only consist of Latin letters, numbers, underscore and dash"
+            )
         return values

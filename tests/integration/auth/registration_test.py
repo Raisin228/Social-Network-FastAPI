@@ -8,7 +8,9 @@ from utils import USER_DATA
 
 
 class TestRegistrationUser:
-    async def test_uniq_user(self, ac: AsyncClient, session: AsyncSession, _mock_send_mail: AsyncMock):
+    async def test_uniq_user(
+        self, ac: AsyncClient, session: AsyncSession, _mock_send_mail: AsyncMock
+    ):
         """Регистрация аккаунта на почту, которая ещё не использовалась в системе"""
         response = await ac.post("/auth/registration", json=USER_DATA)
 
@@ -32,14 +34,18 @@ class TestRegistrationUser:
         user_record = await UserDao.find_by_filter(session, {"email": USER_DATA["email"]})
         await UserDao.delete_by_filter(session, {"id": user_record["id"]})
 
-    async def test_occupied_email(self, _create_standard_user, ac: AsyncClient, _mock_send_mail: AsyncMock):
+    async def test_occupied_email(
+        self, _create_standard_user, ac: AsyncClient, _mock_send_mail: AsyncMock
+    ):
         """Регистрация пользователя на уже занятую почту"""
         response = await ac.post("/auth/registration", json=USER_DATA)
         assert response.status_code == list(CONFLICT.keys())[0]
         assert response.json() == {"detail": "User with that email already exist"}
         assert not _mock_send_mail.called
 
-    async def test_invalid_input_data(self, ac: AsyncClient, session: AsyncSession, _mock_send_mail: AsyncMock):
+    async def test_invalid_input_data(
+        self, ac: AsyncClient, session: AsyncSession, _mock_send_mail: AsyncMock
+    ):
         """Не валидные данные для регистрации пользователя (неправильная почта и короткий пароль)"""
         incorrect_user_data = {"email": "incorrect_mail", "password": "123"}
         response = await ac.post("/auth/registration", json=incorrect_user_data)

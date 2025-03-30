@@ -9,7 +9,9 @@ class BaseDAO:
     model = None
 
     @classmethod
-    async def find_by_filter(cls, session: AsyncSession, find_by: Union[Dict, None] = None) -> None | Dict | List[Dict]:
+    async def find_by_filter(
+        cls, session: AsyncSession, find_by: Union[Dict, None] = None
+    ) -> None | Dict | List[Dict]:
         """Поиск по фильтрам или получить все записи"""
         query = select(cls.model).filter_by(**find_by)
         data = await session.execute(query)
@@ -23,7 +25,9 @@ class BaseDAO:
         return result
 
     @classmethod
-    async def add(cls, session: AsyncSession, values: Union[Dict, List[Dict]]) -> Union[model, List[model]]:
+    async def add(
+        cls, session: AsyncSession, values: Union[Dict, List[Dict]]
+    ) -> Union[model, List[model]]:
         """
         Adds one or multiple objects to the database.
 
@@ -62,7 +66,9 @@ class BaseDAO:
         return models if len(models) > 1 else models[0]
 
     @classmethod
-    async def update_row(cls, session: AsyncSession, new_data: dict, filter_parameters: dict) -> List[Tuple]:
+    async def update_row(
+        cls, session: AsyncSession, new_data: dict, filter_parameters: dict
+    ) -> List[Tuple]:
         """Выбрать запис(ь|и) и обновить поля"""
         data_without_none = {key: value for key, value in new_data.items() if value is not None}
         if len(data_without_none) == 0:

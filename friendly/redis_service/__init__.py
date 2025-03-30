@@ -31,7 +31,9 @@ class RedisService:
         """Строитель ключей для noSQL базы"""
         full_path = request.url.path
         if request.query_params:
-            sort_query_params = "&".join(f"{k}={v}" for k, v in sorted(request.query_params.items()))
+            sort_query_params = "&".join(
+                f"{k}={v}" for k, v in sorted(request.query_params.items())
+            )
             full_path += "?" + sort_query_params
 
         return full_path if user is None else f"{user.id}:{full_path}"

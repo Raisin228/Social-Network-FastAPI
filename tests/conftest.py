@@ -14,7 +14,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from utils import get_token_need_type, rows
 
-test_async_engine = create_async_engine(url=settings.db_url_for_test, echo=False, pool_size=5, max_overflow=10)
+test_async_engine = create_async_engine(
+    url=settings.db_url_for_test, echo=False, pool_size=5, max_overflow=10
+)
 
 test_session_factory = async_sessionmaker(test_async_engine, class_=AsyncSession)
 database.Base.metadata.bind = test_async_engine

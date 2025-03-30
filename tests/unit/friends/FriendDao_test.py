@@ -7,13 +7,16 @@ from sqlalchemy import and_, case, null, or_, select
 
 
 def test_bool_expression_friend_relationship():
-    """Пользователь может быть другом либо как инициатор либо как получатель. Важно чтоб запрос содержал тип 'дружба' и
-    состояние пользователя (инициатор/получатель)"""
+    """Пользователь может быть другом либо как инициатор либо как получатель.
+    Важно чтоб запрос содержал тип 'дружба' и состояние пользователя (инициатор/получатель)"""
     user_id = uuid.uuid4()
     expression = FriendDao._bool_expression_constructor(Relations.FRIEND, user_id)
 
     assert expression.compare(
-        and_(Friend.relationship_type == Relations.FRIEND, or_(Friend.friend_id == user_id, Friend.user_id == user_id))
+        and_(
+            Friend.relationship_type == Relations.FRIEND,
+            or_(Friend.friend_id == user_id, Friend.user_id == user_id),
+        )
     )
 
 
@@ -22,7 +25,9 @@ def test_bool_expression_not_approve():
     user_id = uuid.uuid4()
     expression = FriendDao._bool_expression_constructor(Relations.NOT_APPROVE, user_id)
 
-    assert expression.compare(and_(Friend.relationship_type == Relations.NOT_APPROVE, or_(Friend.friend_id == user_id)))
+    assert expression.compare(
+        and_(Friend.relationship_type == Relations.NOT_APPROVE, or_(Friend.friend_id == user_id))
+    )
 
 
 def test_constructor_select_not_approve_appeal():
@@ -31,15 +36,28 @@ def test_constructor_select_not_approve_appeal():
     expr = FriendDao._constructor_select_friends(0, 10, Relations.NOT_APPROVE, user_id)
 
     assert expr.compare(
-        select(Friend.relationship_type, User.id, User.first_name, User.last_name, User.nickname, User.birthday)
+        select(
+            Friend.relationship_type,
+            User.id,
+            User.first_name,
+            User.last_name,
+            User.nickname,
+            User.birthday,
+        )
         .join(User, Friend.user_id == User.id)
-        .where(and_(Friend.relationship_type == Relations.NOT_APPROVE, or_(Friend.friend_id == user_id)))
+        .where(
+            and_(
+                Friend.relationship_type == Relations.NOT_APPROVE, or_(Friend.friend_id == user_id)
+            )
+        )
         .order_by(
             case(
                 (User.last_name.isnot(None), User.last_name),
                 (User.last_name.is_(None), null()),
             ),
-            case((User.first_name.isnot(None), User.first_name), (User.first_name.is_(None), null())),
+            case(
+                (User.first_name.isnot(None), User.first_name), (User.first_name.is_(None), null())
+            ),
             User.id,
         )
         .offset(0)

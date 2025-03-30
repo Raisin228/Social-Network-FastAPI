@@ -34,7 +34,9 @@ class YOSService:
     async def save_file(cls, file_name: str, user_id: UUID, file: bytes, file_type: str) -> str:
         """Сохранить файл в облаке"""
         path_to_file = f"{user_id}/{file_name}"
-        await cls.client.put_object(Bucket=settings.AWS_BUCKET_NAME, Key=path_to_file, Body=file, ContentType=file_type)
+        await cls.client.put_object(
+            Bucket=settings.AWS_BUCKET_NAME, Key=path_to_file, Body=file, ContentType=file_type
+        )
         return f"{settings.AWS_ENDPOINT_URL}/{settings.AWS_BUCKET_NAME}/{path_to_file}"
 
     @classmethod

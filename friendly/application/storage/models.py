@@ -20,7 +20,9 @@ class File(Base):
     name: Mapped[str] = MappedColumn(String(32), nullable=False)
     s3_path: Mapped[str] = MappedColumn(String(2083), nullable=False, unique=True)
     uploaded_at: Mapped[datetime] = mapped_column(server_default=text("TIMEZONE('utc', now())"))
-    type_id: Mapped[UUID | None] = mapped_column(ForeignKey("fileType.id", ondelete="SET NULL"), nullable=True)
+    type_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("fileType.id", ondelete="SET NULL"), nullable=True
+    )
     size: Mapped[int] = MappedColumn(Integer, nullable=False)  # размер в байтах!
 
     __table_args__ = (CheckConstraint("char_length(name) >= 6", name="min_file_name_len_6"),)

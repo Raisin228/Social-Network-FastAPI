@@ -36,6 +36,7 @@ class TestAdditionalProfileInfo:
     def test_incorrect_nickname(self):
         """Валидный ли nick"""
         with pytest.raises(
-            ValueError, match="nickname can only consist of Latin letters, numbers, underscore and dash"
+            ValueError,
+            match="nickname can only consist of Latin letters, numbers, underscore and dash",
         ):
             AdditionalProfileInfo(**{"nickname": "ioqwrh!@32344*(фыав"})

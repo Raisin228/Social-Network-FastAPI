@@ -23,6 +23,8 @@ def setup_logging(*args, **kwargs) -> None:
     """Заменить стандартный логгер на кастомный при запуске Celery"""
     logger.remove()
     logger.add(sys.stdout, level="DEBUG")
-    logger.add("../logs/celery.log", level="INFO", rotation="2 MB", compression="zip", encoding="UTF-8")
+    logger.add(
+        "../logs/celery.log", level="INFO", rotation="2 MB", compression="zip", encoding="UTF-8"
+    )
 
     logging.basicConfig(handlers=[InterceptHandler()], level="INFO")

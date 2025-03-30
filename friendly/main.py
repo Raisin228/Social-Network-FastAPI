@@ -54,7 +54,10 @@ setup_admin(app)
 async def unicorn_exception_handler(_request: Request, exc: Exception):
     """Базовый обработчик исключений"""
     log.error("".join(filter_traceback(exc)))
-    return ORJSONResponse(status_code=500, content={"message": "Что-то пошло не так o_0, пожалуйста, попробуйте позже"})
+    return ORJSONResponse(
+        status_code=500,
+        content={"message": "Что-то пошло не так o_0, пожалуйста, попробуйте позже"},
+    )
 
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET_KEY, max_age=3_600)

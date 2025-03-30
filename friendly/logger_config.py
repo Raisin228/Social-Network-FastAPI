@@ -7,7 +7,9 @@ from loguru import logger
 logger.remove()
 
 logger.add(sys.stdout, level="DEBUG", filter=lambda record: record["level"].name == "DEBUG")
-logger.add("../logs/friendly_app.log", level="INFO", rotation="2 MB", compression="zip", encoding="UTF-8")
+logger.add(
+    "../logs/friendly_app.log", level="INFO", rotation="2 MB", compression="zip", encoding="UTF-8"
+)
 
 log = logger
 

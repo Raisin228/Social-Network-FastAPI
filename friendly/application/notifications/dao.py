@@ -17,11 +17,17 @@ class FirebaseDeviceTokenDao(BaseDAO):
     model = FirebaseDeviceToken
 
     @classmethod
-    async def add_token(cls, session: AsyncSession, user_id: UUID, token: str) -> Union[Exception, FirebaseDeviceToken]:
+    async def add_token(
+        cls, session: AsyncSession, user_id: UUID, token: str
+    ) -> Union[Exception, FirebaseDeviceToken]:
         """Добавить токен (идентификатор) устройства в бд"""
-        device_for_user = await FirebaseDeviceTokenDao.find_by_filter(session, {"device_token": token})
+        device_for_user = await FirebaseDeviceTokenDao.find_by_filter(
+            session, {"device_token": token}
+        )
         if device_for_user is None:
-            return await FirebaseDeviceTokenDao.add(session, {"holder_id": user_id, "device_token": token})
+            return await FirebaseDeviceTokenDao.add(
+                session, {"holder_id": user_id, "device_token": token}
+            )
         raise SuchDeviceTokenAlreadyExist()
 
     @classmethod
@@ -37,12 +43,17 @@ class NotificationDao(BaseDAO):
     model = Notification
 
     @classmethod
-    async def get_notifications(cls, offset: int, limit: int, recipient: UUID, session: AsyncSession) -> List[model]:
+    async def get_notifications(
+        cls, offset: int, limit: int, recipient: UUID, session: AsyncSession
+    ) -> List[model]:
         """Все уведомления, отправленные пользователю"""
         query = (
             select(cls.model)
             .where(cls.model.recipient == recipient)
-            .order_by(case((cls.model.status == NotificationStatus.UNREAD, 0), else_=1), cls.model.created_at.desc())
+            .order_by(
+                case((cls.model.status == NotificationStatus.UNREAD, 0), else_=1),
+                cls.model.created_at.desc(),
+            )
             .offset(offset)
             .limit(limit)
         )
@@ -55,7 +66,9 @@ class NotificationDao(BaseDAO):
         cls, n_id: UUID, receiver_id: UUID, session: AsyncSession
     ) -> Union[Exception, Tuple]:
         """Изменить статус уведомления"""
-        notify = await NotificationDao.find_by_filter(session, {"id": n_id, "recipient": receiver_id})
+        notify = await NotificationDao.find_by_filter(
+            session, {"id": n_id, "recipient": receiver_id}
+        )
         if notify is None:
             raise DataDoesNotExist
 

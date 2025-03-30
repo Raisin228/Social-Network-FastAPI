@@ -27,7 +27,9 @@ class TestProfileAPI:
             "is_admin": False,
         }
 
-    async def test_change_profile_with_correct_data(self, _create_standard_user, get_access_token, ac: AsyncClient):
+    async def test_change_profile_with_correct_data(
+        self, _create_standard_user, get_access_token, ac: AsyncClient
+    ):
         """Пользователь вносит корректные данные в свой профиль"""
         new_data = {
             "first_name": "Jason",
@@ -37,7 +39,9 @@ class TestProfileAPI:
             "nickname": "bog_at_04",
         }
         result = await ac.patch(
-            "/profile/update_information", headers={"Authorization": f"Bearer {get_access_token}"}, json=new_data
+            "/profile/update_information",
+            headers={"Authorization": f"Bearer {get_access_token}"},
+            json=new_data,
         )
 
         assert result.status_code == list(SUCCESS.keys())[0]
@@ -52,7 +56,9 @@ class TestProfileAPI:
             "is_admin": False,
         }
 
-    async def test_change_nickname_which_occupied(self, _create_standard_user, get_access_token, ac: AsyncClient):
+    async def test_change_nickname_which_occupied(
+        self, _create_standard_user, get_access_token, ac: AsyncClient
+    ):
         """Пользователь меняет ник на уже существующий в системе"""
         id_fake_user = uuid.uuid4()
         async with Transaction() as ses:
@@ -79,7 +85,8 @@ class TestProfileAPI:
         """Пользователь удаляет аккаунт из системы"""
         user_id = _create_standard_user.id
         response = await ac.delete(
-            "/profile/delete_account", headers={"Authorization": f"Bearer {get_token_need_type(user_id)}"}
+            "/profile/delete_account",
+            headers={"Authorization": f"Bearer {get_token_need_type(user_id)}"},
         )
 
         assert response.status_code == list(SUCCESS.keys())[0]

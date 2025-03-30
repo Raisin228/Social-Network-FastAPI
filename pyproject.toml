@@ -54,7 +54,7 @@ asyncio_default_fixture_loop_scope = "function"
 filterwarnings = "ignore::Warning"
 
 [tool.black]
-line-length = 120
+line-length = 100
 target-version = ["py311"]
 
 [tool.isort]

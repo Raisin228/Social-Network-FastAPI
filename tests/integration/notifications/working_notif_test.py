@@ -27,7 +27,8 @@ async def make_test_notification(usr, status: str = "UNREAD") -> Tuple[Dict, Tup
         temp = await NotificationDao.add(sess, prepared_data)
         temp_dict = temp.to_dict()
     saved_notify = {
-        key: str(value) if key in ["sender", "recipient", "id"] else value for key, value in temp_dict.items()
+        key: str(value) if key in ["sender", "recipient", "id"] else value
+        for key, value in temp_dict.items()
     }
     saved_notify["created_at"] = saved_notify["created_at"].isoformat()
     saved_notify.pop("recipient")
@@ -40,7 +41,8 @@ class TestGetListNotify:
         data = await make_test_notification(_create_standard_user)
 
         res = await ac.get(
-            "/notify/notifications", headers={"Authorization": f"Bearer {get_token_need_type(data[1][1].get('id'))}"}
+            "/notify/notifications",
+            headers={"Authorization": f"Bearer {get_token_need_type(data[1][1].get('id'))}"},
         )
         assert res.status_code == list(SUCCESS.keys())[0]
         assert res.json() == [data[0]]
@@ -66,7 +68,8 @@ class TestMarkNotifyAs:
         )
         assert res.status_code == list(NOT_FOUND.keys())[0]
         assert res.json() == {
-            "detail": f"{DataDoesNotExist().msg} Notifications with this ID don't exist in the system."
+            "detail": f"{DataDoesNotExist().msg} Notifications with this"
+            f" ID don't exist in the system."
         }
 
     @pytest.mark.parametrize("stat", incorrect_dates)
