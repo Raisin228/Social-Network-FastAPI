@@ -15,7 +15,7 @@
 `kill -9 <PID>` - убиваем процесс
 ---
 Запуск тестов (cd friendly) -> `poetry run pytest ../tests/`  
-Проверка кода на покрытие тестами -> `poetry run pytest --cov .`  
+Проверка кода на покрытие тестами (нужно выйти в корень) -> `poetry run pytest --cov .`  
 Преобразовать файлик .coverage в удобочитаемый отчёт -> `coverage html`  
 ---  
 Запуск pre-commit

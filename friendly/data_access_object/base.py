@@ -12,7 +12,23 @@ class BaseDAO:
     async def find_by_filter(
         cls, session: AsyncSession, find_by: Union[Dict, None] = None
     ) -> None | Dict | List[Dict]:
-        """Поиск по фильтрам или получить все записи"""
+        """
+        Search for records in the database by filters.
+
+        Args:
+            session (AsyncSession): The SQLAlchemy async session.
+            find_by (Union[Dict, None]): Filters for record search.
+
+        Returns:
+            Union[None, Dict, List]:
+                - Method returns None, if nothing was found.
+                - Only one dict, if one record was found.
+                - List of dict, if more than one record was found.
+
+        Raises:
+            SQLAlchemyError: If the database operation fails.
+            TypeError: If `find_by` is not a dictionary or has invalid keys.
+        """
         query = select(cls.model).filter_by(**find_by)
         data = await session.execute(query)
         result = data.scalars().all()
@@ -67,7 +83,7 @@ class BaseDAO:
 
     @classmethod
     async def update_row(
-        cls, session: AsyncSession, new_data: dict, filter_parameters: dict
+        cls, session: AsyncSession, new_data: Dict, filter_parameters: Dict
     ) -> List[Tuple]:
         """Выбрать запис(ь|и) и обновить поля"""
         data_without_none = {key: value for key, value in new_data.items() if value is not None}
@@ -84,9 +100,25 @@ class BaseDAO:
         return [tuple(row) for row in temp.fetchall()]
 
     @classmethod
-    async def delete_by_filter(cls, session: AsyncSession, find_by: dict):
-        """Удалить все записи, удовлетворяющие условиям фильтрации"""
+    async def delete_by_filter(cls, session: AsyncSession, find_by: Dict) -> List[Dict]:
+        """
+        Delete all entries that meet the filtering conditions.
+
+        Args:
+            session (AsyncSession): The SQLAlchemy async session.
+            find_by (Dict): Filters for selecting entries for deletion.
+
+        Returns:
+            List[Dict]:
+                - List of deleted rows.
+
+        Raises:
+            SQLAlchemyError: If the database operation fails.
+            TypeError: If `find_by` is not a dictionary or has invalid keys.
+        """
         stmt = delete(cls.model).filter_by(**find_by).returning(*cls.model.__table__.columns)
         result = await session.execute(stmt)
         await session.commit()
-        return result.fetchall()
+
+        # для простоты используем protected method
+        return [dict(row._mapping) for row in result.fetchall()]  # noqa

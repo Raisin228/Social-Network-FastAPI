@@ -1,9 +1,9 @@
-import uuid
 from typing import List
+from uuid import UUID
 
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
-from application.core.responses import BAD_REQUEST, FORBIDDEN, UNAUTHORIZED
+from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from application.news.dao import NewsDao, NewsFilesDao
 from application.news.request_body import CreateNews
 from application.news.schemas import FullNewsInfo
@@ -60,9 +60,40 @@ async def create_news(news_info: CreateNews, user: User = Depends(get_current_us
     )
 
 
+@router.delete("/erase_post/{post_id}", responses=NOT_FOUND | FORBIDDEN | UNAUTHORIZED)
+async def destroy_news(post_id: UUID, user: User = Depends(get_current_user_access_token)):
+    print(user.__dict__)
+    async with Transaction() as session:
+        post = await NewsDao.find_by_filter(session, {"id": post_id})
+
+        if post is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No records could be found for the specified ID. There is probably a typo "
+                "in the post_id.",
+            )
+
+    post_owner_id = post.get("user_id")
+    print(post_owner_id, user.id)
+    if post_owner_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are trying to delete a news item created by another user. "
+            "The operation is impossible. You must be the creator of the post.",
+        )
+
+    async with Transaction() as session:
+        deleted_post = await NewsDao.delete_by_filter(session, {"id": post.get("id")})
+        print(deleted_post)
+
+
+# делаем получение новостей
+
+
 # todo возможно следует вынести в utils
+# todo можно сделать удаление записи о файле из таблицы file если файл удалили с облака
 async def __link_post_with_files(
-    link_ids: List[uuid.UUID], news_identity: uuid.UUID, session: AsyncSession
+    link_ids: List[UUID], news_identity: UUID, session: AsyncSession
 ) -> bool:
     """Связываем вложения с постами"""
     data_for_saving = []
