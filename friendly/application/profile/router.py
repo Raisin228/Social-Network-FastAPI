@@ -60,6 +60,4 @@ async def delete_profile(user: User = Depends(get_current_user_access_token)):
         deleted_account = await ProfileDao.delete_by_filter(session, {"id": str(user.id)})
     deleted_account = deleted_account[0]
 
-    columns = [column for column in User.get_column_names()]
-    deleted_account = dict(zip(columns, deleted_account))
     return AccountDeleted(deleted_account_info=GetUser.model_validate(deleted_account))

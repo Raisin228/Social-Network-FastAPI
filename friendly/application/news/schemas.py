@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Literal
 from uuid import UUID
 
 from application.storage.schemas import MinFileInfo
@@ -44,3 +44,13 @@ class FullNewsInfo(NewsBodyInfo):
         description="Date of last news update", examples=["2025-03-30T15:17:10.093545"]
     )
     attachments: List[MinFileInfo]
+
+
+class NewsRemoved(NewsBodyInfo):
+    """Новость была успешно удалена"""
+
+    msg: Literal["The news was successfully deleted"] = "The news was successfully deleted."
+    news_id: UUID = Field(description="Id of the news in the database.")
+    deleted_at: datetime = Field(
+        description="Time to delete an entry.", examples=["2025-03-30T15:17:10.093545"]
+    )

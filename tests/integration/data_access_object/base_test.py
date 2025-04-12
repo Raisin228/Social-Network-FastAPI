@@ -86,7 +86,7 @@ class TestDeleteByFilter:
         query = select(User).where(User.id == rows[0].get("id"))
         res = await session.execute(query)
         assert res.scalar_one_or_none() is None
-        assert del_row == [tuple(rows[0].values())]
+        assert del_row == [info]
 
     async def test_no_data_on_such_filter(self, session: AsyncSession):
         """Тест. Указали фильтр, которому не соответствуют данные"""

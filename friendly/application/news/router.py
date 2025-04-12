@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from typing import List
 from uuid import UUID
 
@@ -6,7 +7,7 @@ from application.auth.models import User
 from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from application.news.dao import NewsDao, NewsFilesDao
 from application.news.request_body import CreateNews
-from application.news.schemas import FullNewsInfo
+from application.news.schemas import FullNewsInfo, NewsRemoved
 from database import Transaction
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
@@ -49,9 +50,9 @@ async def create_news(news_info: CreateNews, user: User = Depends(get_current_us
 
     return FullNewsInfo(
         **{
+            "news_id": news_body["id"],
             "topic": news_body["topic"],
             "main_text": news_body["main_text"],
-            "news_id": news_body["id"],
             "owner_id": news_body["user_id"],
             "created_at": news_body["created_at"],
             "updated_at": news_body["updated_at"],
@@ -60,9 +61,14 @@ async def create_news(news_info: CreateNews, user: User = Depends(get_current_us
     )
 
 
-@router.delete("/erase_post/{post_id}", responses=NOT_FOUND | FORBIDDEN | UNAUTHORIZED)
+@router.delete(
+    "/erase_post/{post_id}",
+    responses=NOT_FOUND | FORBIDDEN | UNAUTHORIZED,
+    response_model=NewsRemoved,
+)
 async def destroy_news(post_id: UUID, user: User = Depends(get_current_user_access_token)):
-    print(user.__dict__)
+    """Удалить пост, созданный пользователем"""
+
     async with Transaction() as session:
         post = await NewsDao.find_by_filter(session, {"id": post_id})
 
@@ -74,7 +80,6 @@ async def destroy_news(post_id: UUID, user: User = Depends(get_current_user_acce
             )
 
     post_owner_id = post.get("user_id")
-    print(post_owner_id, user.id)
     if post_owner_id != user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -83,8 +88,16 @@ async def destroy_news(post_id: UUID, user: User = Depends(get_current_user_acce
         )
 
     async with Transaction() as session:
-        deleted_post = await NewsDao.delete_by_filter(session, {"id": post.get("id")})
-        print(deleted_post)
+        deleted_post = (await NewsDao.delete_by_filter(session, {"id": post_id}))[0]
+
+    return NewsRemoved(
+        **{
+            "news_id": post_id,
+            "topic": deleted_post.get("topic"),
+            "main_text": deleted_post.get("main_text"),
+            "deleted_at": datetime.now(timezone.utc),
+        }
+    )
 
 
 # делаем получение новостей
