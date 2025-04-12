@@ -9,9 +9,14 @@ from utils import get_token_need_type
 
 async def test_other_user_friends(_create_standard_user, ac: AsyncClient, session: AsyncSession):
     """Тест. Получить список друзей другого пользователя"""
-    store = await get_two_users(_create_standard_user, session)
+    store = await get_two_users(_create_standard_user)
     await FriendDao.friend_request(
-        session, {"user_id": store[1].get("id"), "friend_id": store[0].get("id"), "relationship_type": Relations.FRIEND}
+        session,
+        {
+            "user_id": store[1].get("id"),
+            "friend_id": store[0].get("id"),
+            "relationship_type": Relations.FRIEND,
+        },
     )
 
     resp = await ac.get(
@@ -33,8 +38,10 @@ async def test_other_user_friends(_create_standard_user, ac: AsyncClient, sessio
 
 async def test_income_requests(_create_standard_user, ac: AsyncClient, session: AsyncSession):
     """Тест. Получить входящие запросы на дружбу"""
-    store = await get_two_users(_create_standard_user, session)
-    await FriendDao.friend_request(session, {"user_id": store[1].get("id"), "friend_id": store[0].get("id")})
+    store = await get_two_users(_create_standard_user)
+    await FriendDao.friend_request(
+        session, {"user_id": store[1].get("id"), "friend_id": store[0].get("id")}
+    )
 
     resp = await ac.get(
         "/users/friend/incoming_friend_requests",

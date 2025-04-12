@@ -10,22 +10,33 @@ from utils import USER_DATA, get_token_need_type
 
 
 class TestForgotPassword:
-    async def test_get_email_with_reset_link_user_does_not_exist(self, ac: AsyncClient, _mock_send_mail: AsyncMock):
+    async def test_get_email_with_reset_link_user_does_not_exist(
+        self, ac: AsyncClient, _mock_send_mail: AsyncMock
+    ):
         """Запрос на сброс пароля [через почту] для пользователя, которого нет в системе"""
-        response = await ac.post("/auth/single_link_to_password_reset", json={"email": USER_DATA["email"]})
+        response = await ac.post(
+            "/auth/single_link_to_password_reset", json={"email": USER_DATA["email"]}
+        )
 
         assert response.status_code == list(NOT_FOUND.keys())[0]
-        assert response.json() == {"detail": "User with 'testuser@example.com' email address doesn't exist"}
+        assert response.json() == {
+            "detail": "User with 'testuser@example.com' email address doesn't exist"
+        }
         assert not _mock_send_mail.called
 
     async def test_get_reset_password_link_to_email(
         self, _create_standard_user, ac: AsyncClient, _mock_send_mail: AsyncMock
     ):
         """Отправить письмо для сброса пароля существующему в системе пользователю"""
-        response = await ac.post("/auth/single_link_to_password_reset", json={"email": USER_DATA["email"]})
+        response = await ac.post(
+            "/auth/single_link_to_password_reset", json={"email": USER_DATA["email"]}
+        )
 
         assert response.status_code == list(SUCCESS.keys())[0]
-        assert response.json() == {"email": _create_standard_user.email, "msg": "The email has been sent successfully"}
+        assert response.json() == {
+            "email": _create_standard_user.email,
+            "msg": "The email has been sent successfully",
+        }
         _mock_send_mail.assert_called_once()
 
     async def test_reset_password_by_link_from_email(
@@ -37,7 +48,9 @@ class TestForgotPassword:
         response = await ac.patch(
             "/auth/replace_existent_password",
             json=dict(data),
-            headers={"Authorization": f"Bearer {get_token_need_type(_create_standard_user.id, alias)}"},
+            headers={
+                "Authorization": f"Bearer {get_token_need_type(_create_standard_user.id, alias)}"
+            },
         )
 
         assert response.status_code == list(SUCCESS.keys())[0]

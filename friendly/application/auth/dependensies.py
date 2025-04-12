@@ -30,7 +30,9 @@ def checkup_token(req_token_type: str, identity) -> Dict | Exception:
     return data
 
 
-async def get_user_by_sub_id(token_payload: dict, session: AsyncSession) -> GetUser | None | Exception:
+async def get_user_by_sub_id(
+    token_payload: dict, session: AsyncSession
+) -> GetUser | None | Exception:
     """Достать пользователя из бд по user_id из payload"""
     user_id = token_payload.get("user_id")
     if not user_id:

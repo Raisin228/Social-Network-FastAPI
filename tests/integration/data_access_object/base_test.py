@@ -42,14 +42,14 @@ class TestFindByFilter:
 class TestAddOne:
     async def test_row(self, session: AsyncSession):
         """Тест. Вставка строки в бд"""
-        value = await BaseDAO.add_one(session, rows[0])
+        value = await BaseDAO.add(session, rows[0])
         assert value.to_dict() == User(**rows[0]).to_dict()
 
     async def test_duplicate_values(self, _create_standard_user, session: AsyncSession):
         """Тест. Добавление повторяющихся данных в уникальное поле"""
         with pytest.raises((IntegrityError, DBAPIError)):
             try:
-                await BaseDAO.add_one(session, rows[0])
+                await BaseDAO.add(session, rows[0])
             except Exception as e:
                 await session.rollback()
                 raise e
@@ -86,7 +86,7 @@ class TestDeleteByFilter:
         query = select(User).where(User.id == rows[0].get("id"))
         res = await session.execute(query)
         assert res.scalar_one_or_none() is None
-        assert del_row == [tuple(rows[0].values())]
+        assert del_row == [info]
 
     async def test_no_data_on_such_filter(self, session: AsyncSession):
         """Тест. Указали фильтр, которому не соответствуют данные"""

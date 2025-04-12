@@ -6,12 +6,18 @@ from config import settings
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
 
-class FileSavedOnCloud(BaseModel):
-    msg: Literal["The file was saved successfully"] = "The file was saved successfully"
+class MinFileInfo(BaseModel):
+    """Минимально допустимая информация о файле"""
+
     file_id: UUID = Field(description="Id of the file in the database.")
     link_to_file: HttpUrl = Field(
-        description="Link to access the file", examples=["https://storage.yandexcloud.net/friendly-files-storage/..."]
+        description="Link to access the file",
+        examples=["https://storage.yandexcloud.net/friendly-files-storage/..."],
     )
+
+
+class FileSavedOnCloud(MinFileInfo):
+    msg: Literal["The file was saved successfully"] = "The file was saved successfully"
 
 
 class FileRemoved(BaseModel):
@@ -21,11 +27,15 @@ class FileRemoved(BaseModel):
     file_id: UUID = Field(description="Id of the file in the database.")
     name: str = Field(description="Alias file on the server.", min_length=6, max_length=32)
     created_at: datetime = Field(
-        description="The timestamp when the object was created. Automatically set to the current UTC time.",
+        description="The timestamp when the object was created. "
+        "Automatically set to the current UTC time.",
         ge=datetime(1900, 1, 1, 0, 0, 0),
     )
     size: float = Field(
-        description="The file size in MB.", examples=[18.4], ge=0, le=settings.FILE_MAX_SIZE_BYTE // 1024**2
+        description="The file size in MB.",
+        examples=[18.4],
+        ge=0,
+        le=settings.FILE_MAX_SIZE_BYTE // 1024**2,
     )
 
     @field_validator("created_at")

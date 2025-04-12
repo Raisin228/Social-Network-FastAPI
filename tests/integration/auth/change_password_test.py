@@ -37,7 +37,11 @@ class TestChangePassword:
     async def test_incorrect_cur_password(self, _create_standard_user, ac: AsyncClient):
         """Пользователь указал неверный тек. пароль"""
         request_data = ModifyPassword(
-            **{"current_password": "incorrect_password", "new_password": "qwerty", "confirm_new_password": "qwerty"}
+            **{
+                "current_password": "incorrect_password",
+                "new_password": "qwerty",
+                "confirm_new_password": "qwerty",
+            }
         )
         response = await ac.post(
             "/auth/change_password",
@@ -47,6 +51,7 @@ class TestChangePassword:
 
         assert response.status_code == list(BAD_REQUEST.keys())[0]
         assert response.json() == {
-            "detail": "the password from the current_password field does not match your account password"
+            "detail": "the password from the current_password field does not "
+            "match your account password"
         }
         assert verify_password("very_strong_user_password123", _create_standard_user.password)

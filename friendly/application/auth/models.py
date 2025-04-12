@@ -22,9 +22,13 @@ class User(Base):
     __table_args__ = (
         CheckConstraint("char_length(first_name) >= 2", name="min_first_name_len_2"),
         CheckConstraint("char_length(nickname) >= 5", name="min_nick_len_5"),
-        CheckConstraint("birthday >= DATE '1900-01-01' AND birthday <= CURRENT_DATE", name="check_birthday_1900"),
+        CheckConstraint(
+            "birthday >= DATE '1900-01-01' AND birthday <= CURRENT_DATE", name="check_birthday_1900"
+        ),
         CheckConstraint("sex IN ('Male', 'Female')", name="check_gender"),
-        CheckConstraint("char_length(password) >= 6 OR char_length(password) = 0", name="min_pass_len_6"),
+        CheckConstraint(
+            "char_length(password) >= 6 OR char_length(password) = 0", name="min_pass_len_6"
+        ),
     )
 
     @classmethod

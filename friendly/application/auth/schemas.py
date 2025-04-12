@@ -9,7 +9,9 @@ from pydantic import BaseModel, ConfigDict, Field
 class AccessTokenInfo(BaseModel):
     """Токен доступа"""
 
-    access_token: str = Field(examples=["JWT_token.generated.friendly"], description="some_access_token")
+    access_token: str = Field(
+        examples=["JWT_token.generated.friendly"], description="some_access_token"
+    )
     token_type: Literal["Bearer"] = Field(examples=["Bearer"])
 
     model_config = ConfigDict(extra="forbid")
@@ -18,7 +20,9 @@ class AccessTokenInfo(BaseModel):
 class TokensInfo(AccessTokenInfo):
     """Токены доступа (access | refresh)"""
 
-    refresh_token: str = Field(examples=["JWT_token.generated.friendly"], description="some_refresh_token")
+    refresh_token: str = Field(
+        examples=["JWT_token.generated.friendly"], description="some_refresh_token"
+    )
 
     model_config = ConfigDict(extra="forbid")
 
@@ -27,7 +31,9 @@ class BasicUserFields(Email):
     """Основные поля пользовательского аккаунта"""
 
     id: uuid.UUID
-    is_admin: bool = Field(examples=["false"], description="Is the user an administrator?", default=False)
+    is_admin: bool = Field(
+        examples=["false"], description="Is the user an administrator?", default=False
+    )
 
 
 class GetUser(BasicUserFields, AdditionalProfileInfo):
@@ -39,7 +45,9 @@ class GetUser(BasicUserFields, AdditionalProfileInfo):
 class UserUpdatePassword(BasicUserFields):
     """После смены пароля"""
 
-    msg: Literal["User's password successfully updated"] = Field(default="User's password successfully updated")
+    msg: Literal["User's password successfully updated"] = Field(
+        default="User's password successfully updated"
+    )
 
 
 class UserRegister(BaseModel):
@@ -54,7 +62,9 @@ class UserRegister(BaseModel):
 class ResetPasswordByEmail(Email):
     """Был выполнен запрос на получение ссылки для сброса пароля"""
 
-    msg: Literal["The email has been sent successfully"] = Field(default="The email has been sent successfully")
+    msg: Literal["The email has been sent successfully"] = Field(
+        default="The email has been sent successfully"
+    )
 
 
 class RedirectUserAuth(BaseModel):

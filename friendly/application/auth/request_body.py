@@ -5,7 +5,10 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
 class Email(BaseModel):
     email: EmailStr = Field(
-        min_length=6, max_length=100, examples=["your_email@gmail.com"], description="User's electronic mail"
+        min_length=6,
+        max_length=100,
+        examples=["your_email@gmail.com"],
+        description="User's electronic mail",
     )
 
 
@@ -20,7 +23,9 @@ class UserRegistrationData(Email):
 class NewPassword(BaseModel):
     """Поля для ввода нового пароля"""
 
-    new_password: str = Field(min_length=6, max_length=100, examples=["uX8Tjtj_Xw"], description="New password")
+    new_password: str = Field(
+        min_length=6, max_length=100, examples=["uX8Tjtj_Xw"], description="New password"
+    )
     confirm_new_password: str = Field(
         min_length=6, max_length=100, examples=["uX8Tjtj_Xw"], description="Repeat password"
     )
@@ -39,5 +44,8 @@ class ModifyPassword(NewPassword):
     model_config = ConfigDict(from_attributes=True)
 
     current_password: str = Field(
-        min_length=6, max_length=100, examples=["your_password"], description="The password you want to change"
+        min_length=6,
+        max_length=100,
+        examples=["your_password"],
+        description="The password you want to change",
     )

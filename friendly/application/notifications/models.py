@@ -21,7 +21,9 @@ class FirebaseDeviceToken(Base):
     holder_id: Mapped[userId_fk]
     device_token: Mapped[str] = mapped_column(String(256), nullable=False)
 
-    __table_args__ = (CheckConstraint("char_length(device_token) >= 140", name="min_device_token_len_140"),)
+    __table_args__ = (
+        CheckConstraint("char_length(device_token) >= 140", name="min_device_token_len_140"),
+    )
 
 
 class Notification(Base):
@@ -39,6 +41,7 @@ class Notification(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "created_at >= DATE '1900-01-01' AND created_at <= CURRENT_TIMESTAMP", name="check_created_at_1900"
+            "created_at >= DATE '1900-01-01' AND created_at <= CURRENT_TIMESTAMP",
+            name="check_created_at_1900",
         ),
     )

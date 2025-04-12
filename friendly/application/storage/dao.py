@@ -14,7 +14,9 @@ class FileTypeDao(BaseDAO):
     model = FileType
 
     @classmethod
-    async def get_type_id_file_content_type(cls, content_type: str, session: AsyncSession) -> Dict | None:
+    async def get_type_id_file_content_type(
+        cls, content_type: str, session: AsyncSession
+    ) -> Dict | None:
         cut_mime_type: str = content_type.split("/")[-1].upper()
         row = await FileTypeDao.find_by_filter(session, {"obj_type": cut_mime_type})
         return row.get("id")
@@ -32,16 +34,24 @@ class FileDao(BaseDAO):
         return True
 
     @classmethod
-    async def add_record_about_new_file(cls, u_id: UUID, file: UploadFile, link_to: str, session: AsyncSession) -> File:
+    async def add_record_about_new_file(
+        cls, u_id: UUID, file: UploadFile, link_to: str, session: AsyncSession
+    ) -> File:
         """Добавляет запись о новом файле (загружен в YOS)"""
         model_type = await FileTypeDao.get_type_id_file_content_type(file.content_type, session)
 
         search_param = {"owner_id": u_id, "name": file.filename, "s3_path": link_to}
         is_exist_row = await FileDao.find_by_filter(session, search_param)
         if is_exist_row is None:
-            return await FileDao.add_one(
+            return await FileDao.add(
                 session,
-                {"owner_id": u_id, "name": file.filename, "s3_path": link_to, "type_id": model_type, "size": file.size},
+                {
+                    "owner_id": u_id,
+                    "name": file.filename,
+                    "s3_path": link_to,
+                    "type_id": model_type,
+                    "size": file.size,
+                },
             )
         temp = (
             await FileDao.update_row(

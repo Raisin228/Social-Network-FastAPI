@@ -7,7 +7,9 @@ from utils import USER_DATA
 @pytest.fixture()
 def _mock_google_auth_request() -> AsyncMock:
     """Мок запроса на авторизацию через Google Auth"""
-    with patch("auth.google_oauth.oauth.google.authorize_redirect", new_callable=AsyncMock) as mock_method:
+    with patch(
+        "auth.google_oauth.oauth.google.authorize_redirect", new_callable=AsyncMock
+    ) as mock_method:
         mock_method.return_value = {"msg": "Redirects the user to OAuth server for authentication"}
         yield mock_method
 
@@ -15,8 +17,14 @@ def _mock_google_auth_request() -> AsyncMock:
 @pytest.fixture()
 def _mock_google_auth_token() -> AsyncMock:
     """Выдача токена доступа и получение пользователя заменяем на шаблонный ответ"""
-    with patch("application.auth.router.get_data_from_authorize_token", new_callable=AsyncMock) as mock_method:
-        mock_method.return_value = {"email": USER_DATA["email"], "given_name": "Богдан", "family_name": "Атрошенко"}
+    with patch(
+        "application.auth.router.get_data_from_authorize_token", new_callable=AsyncMock
+    ) as mock_method:
+        mock_method.return_value = {
+            "email": USER_DATA["email"],
+            "given_name": "Богдан",
+            "family_name": "Атрошенко",
+        }
         yield mock_method
 
 
@@ -40,7 +48,11 @@ def _mock_ydex_access_token() -> AsyncMock:
 def _mock_ydex_change_token_to_user() -> AsyncMock:
     """Обменять ac_token ydex на данные пользователя"""
     with patch("application.auth.router.change_token_to_user_info") as mock:
-        mock.return_value = {"first_name": "Богдан", "last_name": "Атрошенко", "default_email": USER_DATA["email"]}
+        mock.return_value = {
+            "first_name": "Богдан",
+            "last_name": "Атрошенко",
+            "default_email": USER_DATA["email"],
+        }
         yield mock
 
 

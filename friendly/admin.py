@@ -37,7 +37,15 @@ class UserAdmin(BaseView, model=User):
     column_default_sort = [(User.email, False)]
     column_details_exclude_list = [User.password]
 
-    form_create_rules = ["first_name", "last_name", "birthday", "sex", "nickname", "email", "password"]
+    form_create_rules = [
+        "first_name",
+        "last_name",
+        "birthday",
+        "sex",
+        "nickname",
+        "email",
+        "password",
+    ]
     form_edit_rules = ["first_name", "last_name", "birthday", "sex", "nickname", "email"]
 
     form_overrides = {"sex": SelectField}
@@ -65,7 +73,10 @@ class FriendAdmin(BaseView, model=Friend):
     icon = "fa-duotone fa-solid fa-handshake"
 
     column_list = [Friend.user_id, Friend.friend_id]
-    column_labels = {Friend.user_id: "Initiator relationship", Friend.friend_id: "Friendship receiver"}
+    column_labels = {
+        Friend.user_id: "Initiator relationship",
+        Friend.friend_id: "Friendship receiver",
+    }
     column_searchable_list = [Friend.user_id, Friend.friend_id]
     column_sortable_list = [Friend.user_id, Friend.friend_id]
     column_default_sort = [(Friend.user_id, False)]
@@ -86,8 +97,12 @@ class FriendAdmin(BaseView, model=Friend):
     async def scaffold_form(self, rules: List[str] | None = None) -> Type[Form]:
         """Отключаем QuerySelectField для внешних ключей"""
         form = await super().scaffold_form()
-        form.user_id = StringField("Initiator Relationship ID", render_kw={"class": "form-control", "maxlength": "36"})
-        form.friend_id = StringField("Friendship Receiver ID", render_kw={"class": "form-control", "maxlength": "36"})
+        form.user_id = StringField(
+            "Initiator Relationship ID", render_kw={"class": "form-control", "maxlength": "36"}
+        )
+        form.friend_id = StringField(
+            "Friendship Receiver ID", render_kw={"class": "form-control", "maxlength": "36"}
+        )
         return form
 
 
@@ -108,7 +123,9 @@ class FirebaseDeviceTokenAdmin(BaseView, model=FirebaseDeviceToken):
     async def scaffold_form(self, rules: List[str] | None = None) -> Type[Form]:
         """Переопределяем FK на StringField"""
         form = await super().scaffold_form()
-        form.holder_id = StringField("Token owner ID", render_kw={"class": "form-control", "maxlength": "36"})
+        form.holder_id = StringField(
+            "Token owner ID", render_kw={"class": "form-control", "maxlength": "36"}
+        )
         return form
 
 
@@ -116,7 +133,11 @@ class NotificationAdmin(BaseView, model=Notification):
     icon = "fa-regular fa-bell"
 
     column_list = [Notification.sender, Notification.recipient, Notification.title]
-    column_labels = {Notification.sender: "Sender", Notification.recipient: "Recipient", Notification.title: "Title"}
+    column_labels = {
+        Notification.sender: "Sender",
+        Notification.recipient: "Recipient",
+        Notification.title: "Title",
+    }
     column_searchable_list = [Notification.sender, Notification.recipient, Notification.title]
     column_sortable_list = [Notification.title]
     column_default_sort = [(Notification.title, False)]
@@ -126,7 +147,10 @@ class NotificationAdmin(BaseView, model=Notification):
     form_overrides = {"title": SelectField, "status": SelectField}
 
     form_args = {
-        "title": {"label": "Notification header", "choices": [(i.value, i.value) for i in NotificationEvent]},
+        "title": {
+            "label": "Notification header",
+            "choices": [(i.value, i.value) for i in NotificationEvent],
+        },
         "status": {
             "label": "Message status",
             "choices": [
@@ -139,8 +163,12 @@ class NotificationAdmin(BaseView, model=Notification):
     async def scaffold_form(self, rules: List[str] | None = None) -> Type[Form]:
         """Добавляем Sender / Recipient в create форму"""
         form = await super().scaffold_form()
-        form.sender = StringField("Sender ID", render_kw={"class": "form-control", "maxlength": "36"})
-        form.recipient = StringField("Recipient ID", render_kw={"class": "form-control", "maxlength": "36"})
+        form.sender = StringField(
+            "Sender ID", render_kw={"class": "form-control", "maxlength": "36"}
+        )
+        form.recipient = StringField(
+            "Recipient ID", render_kw={"class": "form-control", "maxlength": "36"}
+        )
         return form
 
 

@@ -8,14 +8,18 @@ from utils import USER_DATA
 
 
 class TestLogin:
-    async def test_exist_user_with_correct_email_and_pass(self, _create_standard_user, ac: AsyncClient):
+    async def test_exist_user_with_correct_email_and_pass(
+        self, _create_standard_user, ac: AsyncClient
+    ):
         """Пользователь существует в системе и пытается сделать вход"""
         response = await ac.post("/auth/login", json=USER_DATA)
         assert response.status_code == list(SUCCESS.keys())[0]
         data = response.json()
         access = decode_jwt(data.get("access_token"))
         refresh = decode_jwt(data.get("refresh_token"))
-        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(_create_standard_user.id)
+        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(
+            _create_standard_user.id
+        )
         assert refresh.get("token_type") == REFRESH_TOKEN_TYPE and access.get("user_id") == str(
             _create_standard_user.id
         )

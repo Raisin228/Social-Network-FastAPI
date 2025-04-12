@@ -10,7 +10,9 @@ class UserDao(BaseDAO):
     model = User
 
     @classmethod
-    async def authenticate_user(cls, email: str, password: str, session: AsyncSession) -> Dict | None:
+    async def authenticate_user(
+        cls, email: str, password: str, session: AsyncSession
+    ) -> Dict | None:
         """Существует ли пользователь с таким логином? Совпадает ли пароль с хэшем в системе"""
         user = await UserDao.find_by_filter(session, {"email": email})
         if user is None or not verify_password(password, user["password"]):

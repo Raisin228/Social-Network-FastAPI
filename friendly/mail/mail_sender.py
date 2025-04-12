@@ -27,7 +27,9 @@ def send_mail(email: EmailStr, body: Dict, sub: str, temp_name: str):
     try:
         body["support_email"] = settings.MAIL_USERNAME
         template = get_html_template(body, temp_name)
-        message = MessageSchema(subject=sub, recipients=[email], body=template, subtype=MessageType.html)
+        message = MessageSchema(
+            subject=sub, recipients=[email], body=template, subtype=MessageType.html
+        )
         fm = FastMail(conf)
         asyncio.run(fm.send_message(message))
     except Exception as ex:

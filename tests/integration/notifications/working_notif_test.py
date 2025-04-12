@@ -5,16 +5,16 @@ import pytest
 from application.core.exceptions import DataDoesNotExist
 from application.core.responses import NOT_FOUND, SUCCESS
 from application.notifications.dao import NotificationDao
-from conftest import get_two_users
+from database import Transaction
 from firebase.notification import NotificationEvent, get_notification_message
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
+from integration.friends.conftest import get_two_users
 from utils import get_token_need_type
 
 
-async def make_test_notification(usr, sess: AsyncSession, status: str = "UNREAD") -> Tuple[Dict, Tuple[Dict, Dict]]:
+async def make_test_notification(usr, status: str = "UNREAD") -> Tuple[Dict, Tuple[Dict, Dict]]:
     """Создаёт запись о тестовом уведомлении в бд"""
-    store = await get_two_users(usr, sess)
+    store = await get_two_users(usr)
     msg_info = get_notification_message(NotificationEvent.BLOCK_TERMINATE, store[0].get("nickname"))
     prepared_data = {
         "sender": str(store[0].get("id")),
@@ -23,9 +23,12 @@ async def make_test_notification(usr, sess: AsyncSession, status: str = "UNREAD"
         "message": msg_info,
         "status": status,
     }
-    temp = await NotificationDao.add_one(sess, prepared_data)
+    async with Transaction() as sess:
+        temp = await NotificationDao.add(sess, prepared_data)
+        temp_dict = temp.to_dict()
     saved_notify = {
-        key: str(value) if key in ["sender", "recipient", "id"] else value for key, value in temp.to_dict().items()
+        key: str(value) if key in ["sender", "recipient", "id"] else value
+        for key, value in temp_dict.items()
     }
     saved_notify["created_at"] = saved_notify["created_at"].isoformat()
     saved_notify.pop("recipient")
@@ -33,12 +36,13 @@ async def make_test_notification(usr, sess: AsyncSession, status: str = "UNREAD"
 
 
 class TestGetListNotify:
-    async def test_get_notifications(self, _create_standard_user, ac: AsyncClient, session: AsyncSession):
+    async def test_get_notifications(self, _create_standard_user, ac: AsyncClient):
         """Тест. Получить мои уведомления"""
-        data = await make_test_notification(_create_standard_user, session)
+        data = await make_test_notification(_create_standard_user)
 
         res = await ac.get(
-            "/notify/notifications", headers={"Authorization": f"Bearer {get_token_need_type(data[1][1].get('id'))}"}
+            "/notify/notifications",
+            headers={"Authorization": f"Bearer {get_token_need_type(data[1][1].get('id'))}"},
         )
         assert res.status_code == list(SUCCESS.keys())[0]
         assert res.json() == [data[0]]
@@ -64,13 +68,14 @@ class TestMarkNotifyAs:
         )
         assert res.status_code == list(NOT_FOUND.keys())[0]
         assert res.json() == {
-            "detail": f"{DataDoesNotExist().msg} Notifications with this ID don't exist in the system."
+            "detail": f"{DataDoesNotExist().msg} Notifications with this"
+            f" ID don't exist in the system."
         }
 
     @pytest.mark.parametrize("stat", incorrect_dates)
-    async def test_change_status(self, stat: str, _create_standard_user, ac: AsyncClient, session: AsyncSession):
+    async def test_change_status(self, stat: str, _create_standard_user, ac: AsyncClient):
         """Меняем статус у записи"""
-        data = await make_test_notification(_create_standard_user, session, stat)
+        data = await make_test_notification(_create_standard_user, stat)
         data[0]["status"] = "READ" if stat == "UNREAD" else "UNREAD"
 
         res = await ac.patch(
@@ -91,9 +96,9 @@ class TestDeleteNot:
         assert res.status_code == list(NOT_FOUND.keys())[0]
         assert res.json() == {"detail": "No incoming notifications."}
 
-    async def test_clear_all_incoming(self, _create_standard_user, ac: AsyncClient, session: AsyncSession):
+    async def test_clear_all_incoming(self, _create_standard_user, ac: AsyncClient):
         """Удалить все входящие"""
-        data = await make_test_notification(_create_standard_user, session)
+        data = await make_test_notification(_create_standard_user)
 
         res = await ac.delete(
             "/notify/clear-notifications",

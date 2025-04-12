@@ -46,8 +46,12 @@ class TestGoogleOAuth:
         data = response.json()
         access = decode_jwt(data.get("access_token"))
         refresh = decode_jwt(data.get("refresh_token"))
-        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(usr.get("id"))
-        assert refresh.get("token_type") == REFRESH_TOKEN_TYPE and access.get("user_id") == str(usr.get("id"))
+        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(
+            usr.get("id")
+        )
+        assert refresh.get("token_type") == REFRESH_TOKEN_TYPE and access.get("user_id") == str(
+            usr.get("id")
+        )
 
         await UserDao.delete_by_filter(session, {"email": USER_DATA["email"]})
 
@@ -62,7 +66,9 @@ class TestGoogleOAuth:
         data = response.json()
         access = decode_jwt(data.get("access_token"))
         refresh = decode_jwt(data.get("refresh_token"))
-        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(_create_standard_user.id)
+        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(
+            _create_standard_user.id
+        )
         assert refresh.get("token_type") == REFRESH_TOKEN_TYPE and access.get("user_id") == str(
             _create_standard_user.id
         )
@@ -88,8 +94,9 @@ class TestYandexOAuth:
         """Перенаправление через запрос с клиентского приложения"""
         response = await ac.get("/auth/login/via_yandex")
         _mock_redirect_response.assert_called_once_with(
-            f"https://oauth.yandex.ru/authorize?response_type=code&client_id={settings.YDEX_CLIENT_ID}&"
-            f"redirect_uri=http://test/auth/callback/yandex&force_confirm=true"
+            f"https://oauth.yandex.ru/authorize?response_type=code&client_id="
+            f"{settings.YDEX_CLIENT_ID}&redirect_uri="
+            f"http://test/auth/callback/yandex&force_confirm=true"
         )
         assert response.status_code == list(FOUND.keys())[0]
         assert response.json() == {"msg": "Redirects the user to OAuth server for authentication"}
@@ -100,7 +107,9 @@ class TestYandexOAuth:
         assert response.status_code == list(BAD_REQUEST.keys())[0]
         assert response.json() == {"detail": "The confirmation code is missing."}
 
-    async def test_callback_yandex_failed(self, ac: AsyncClient, _mock_ydex_access_token: AsyncMock):
+    async def test_callback_yandex_failed(
+        self, ac: AsyncClient, _mock_ydex_access_token: AsyncMock
+    ):
         """Пользователь прервал авторизацию"""
         response = await ac.get("/auth/callback/yandex", params={"code": 9999999})
         assert response.status_code == list(BAD_REQUEST.keys())[0]
@@ -123,8 +132,12 @@ class TestYandexOAuth:
         data = response.json()
         access = decode_jwt(data.get("access_token"))
         refresh = decode_jwt(data.get("refresh_token"))
-        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(usr.get("id"))
-        assert refresh.get("token_type") == REFRESH_TOKEN_TYPE and access.get("user_id") == str(usr.get("id"))
+        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(
+            usr.get("id")
+        )
+        assert refresh.get("token_type") == REFRESH_TOKEN_TYPE and access.get("user_id") == str(
+            usr.get("id")
+        )
 
         await UserDao.delete_by_filter(session, {"email": USER_DATA["email"]})
 
@@ -144,7 +157,9 @@ class TestYandexOAuth:
         data = response.json()
         access = decode_jwt(data.get("access_token"))
         refresh = decode_jwt(data.get("refresh_token"))
-        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(_create_standard_user.id)
+        assert access.get("token_type") == ACCESS_TOKEN_TYPE and access.get("user_id") == str(
+            _create_standard_user.id
+        )
         assert refresh.get("token_type") == REFRESH_TOKEN_TYPE and access.get("user_id") == str(
             _create_standard_user.id
         )

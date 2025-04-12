@@ -2,11 +2,11 @@ import asyncio
 from typing import AsyncGenerator
 from unittest.mock import patch
 
+import database
 import fakeredis
 import pytest
 from application.auth.models import User
 from config import settings
-from database import Base, get_async_session
 from httpx import ASGITransport, AsyncClient
 from main import app
 from redis_service import RedisService
@@ -14,10 +14,14 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from utils import get_token_need_type, rows
 
-test_async_engine = create_async_engine(url=settings.db_url_for_test, echo=False, pool_size=5, max_overflow=10)
+test_async_engine = create_async_engine(
+    url=settings.db_url_for_test, echo=False, pool_size=5, max_overflow=10
+)
 
 test_session_factory = async_sessionmaker(test_async_engine, class_=AsyncSession)
-Base.metadata.bind = test_async_engine
+database.Base.metadata.bind = test_async_engine
+
+database.session_factory = test_session_factory
 
 
 async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
@@ -26,7 +30,7 @@ async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-app.dependency_overrides[get_async_session] = override_get_async_session
+app.dependency_overrides[database.get_async_session] = override_get_async_session
 
 
 @pytest.fixture(scope="session")
@@ -47,10 +51,10 @@ async def ac() -> AsyncGenerator[AsyncClient, None]:
 async def prepare_database():
     """Создание и удаление тестовой DB перед запуском тестов"""
     async with test_async_engine.begin() as connection:
-        await connection.run_sync(Base.metadata.create_all)
+        await connection.run_sync(database.Base.metadata.create_all)
     yield
     async with test_async_engine.begin() as connection:
-        await connection.run_sync(Base.metadata.drop_all)
+        await connection.run_sync(database.Base.metadata.drop_all)
 
 
 @pytest.fixture(autouse=True, scope="session")

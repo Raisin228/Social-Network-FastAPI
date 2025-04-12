@@ -45,7 +45,9 @@ def create_jwt_token(data: dict, token_type: str) -> str:
 def decode_jwt(token: str) -> Dict | Exception:
     """Декодирование JWT токена"""
     try:
-        decoded_token = jwt.decode(token, auth_data["secret_key"], algorithms=auth_data["algorithm"])
+        decoded_token = jwt.decode(
+            token, auth_data["secret_key"], algorithms=auth_data["algorithm"]
+        )
         return decoded_token
     except JWTError as e:
         log.error(e)

@@ -4,8 +4,9 @@ from httpx import AsyncClient
 from utils import get_token_need_type
 
 some_device = (
-    "eI8V05b_ZX1eYfXdAs9EuE:APA91bHLObWjb_LNanOwB7D38_mbxudQCE6P27IFzNPYVZLqU_wzolRuOSMh6cRbgs6xZ4mSPTo1Jea"
-    "DUyquFxX8ibqcwa-IylJt5_wFUhk7pYEzWTcsmVtLWZhDLa9Yh8VohDW2i3JA"
+    "eI8V05b_ZX1eYfXdAs9EuE:APA91bHLObWjb_LNanOwB7D38_mbxudQCE6P27IFzNPYVZLq"
+    "U_wzolRuOSMh6cRbgs6xZ4mSPTo1JeaDUyquFxX8ibqcwa-IylJt5_wFUhk7pYEzWTcsmVt"
+    "LWZhDLa9Yh8VohDW2i3JA"
 )
 
 
