@@ -22,7 +22,7 @@
 `pre-commit run -a`
 
 Вшить стандартные данные в DB  
-`python .\scripts\load_values_db.py`
+`python ./scripts/load_values_db.py`
 
 Запуск Celery Worker (cd friendly)
 `celery -A task_queue.__init__:celery worker --loglevel=INFO --pool=solo`

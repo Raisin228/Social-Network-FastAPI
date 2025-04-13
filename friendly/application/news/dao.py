@@ -1,4 +1,4 @@
-from application.news.models import News, NewsFiles
+from application.news.models import News, NewsFiles, Reaction
 from data_access_object.base import BaseDAO
 
 
@@ -8,3 +8,7 @@ class NewsDao(BaseDAO):
 
 class NewsFilesDao(BaseDAO):
     model = NewsFiles
+
+
+class ReactionDao(BaseDAO):
+    model = Reaction
