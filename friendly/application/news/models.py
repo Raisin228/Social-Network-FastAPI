@@ -6,6 +6,7 @@ from typing import List
 from application.core.model_types import id_pk, userId_fk
 from application.storage.models import File
 from database import Base
+from sqlalchemy import CheckConstraint
 from sqlalchemy import Enum as AlchemyEnum
 from sqlalchemy import ForeignKey, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, MappedColumn, relationship
@@ -62,6 +63,11 @@ class Reaction(Base):
     type: Mapped[ReactionType] = MappedColumn(
         AlchemyEnum(ReactionType, name="reaction_type_enum"), nullable=False, unique=True
     )
+    __table_args__ = (
+        CheckConstraint(
+            "char_length(type) >= 3 AND char_length(type) <= 20", name="min_max_type_len_3"
+        ),
+    )
 
 
 class UserNewsReaction(Base):
@@ -78,4 +84,4 @@ class UserNewsReaction(Base):
     )
 
 
-# TODO у всех таблиц идентификаторы с id поменять на @<table_name>
+# TODO у всех таблиц идентификаторы с id поменять на <table_name>_id так лучше по best_practices
