@@ -8,6 +8,7 @@ from application.news.models import (
     ReactionType,
     UserNewsReaction,
 )
+from application.news.schemas import SpecificReaction
 from data_access_object.base import BaseDAO
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,7 +44,9 @@ class UserNewsReactionDao(BaseDAO):
     model = UserNewsReaction
 
     @classmethod
-    async def list_reactions_under_post(cls, session: AsyncSession, usr_id: UUID, news_id: UUID):
+    async def list_reactions_under_post(
+        cls, session: AsyncSession, usr_id: UUID, news_id: UUID
+    ) -> list[SpecificReaction]:
         """
         Получить список реакций под постом
         # todo капец какой не эффективный метод
@@ -78,7 +81,9 @@ class UserNewsReactionDao(BaseDAO):
                 "reacted_by_user": is_reacted,
             }
             result.append(record)
+
         result.sort(key=lambda emoji: (emoji.get("count", 0), emoji.get("type", "")), reverse=True)
+        result = list(map(lambda rec: SpecificReaction.model_validate(rec), result))
         return result
 
     @classmethod

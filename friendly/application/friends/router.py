@@ -1,8 +1,10 @@
 from typing import List, Union
 from uuid import UUID
 
+from application.auth.dao import UserDao
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
+from application.auth.schemas import GetUser
 from application.core.exceptions import DataDoesNotExist
 from application.core.responses import BAD_REQUEST, FORBIDDEN, NOT_FOUND, UNAUTHORIZED
 from application.friends.dao import FriendDao
@@ -67,6 +69,20 @@ async def send_friend_request(
     prepare_notification.delay(user.__dict__, friend_id, NotificationEvent.FRIEND_REQUEST, noty_msg)
 
     return FriendRequestSent(**{"sender": result.user_id, "recipient": result.friend_id})
+
+
+# todo метод дрянь делался на скорую руку (в будущем переделать)
+@router.get(
+    "/feed/list",
+    response_model=List[GetUser],
+    responses=BAD_REQUEST | FORBIDDEN | UNAUTHORIZED | NOT_FOUND,
+)
+async def display_users_in_system(_user: User = Depends(get_current_user_access_token)):
+    """Метод для отображения списка пользователей. Используется для поиска людей"""
+
+    async with Transaction() as session:
+        data = await UserDao.find_by_filter(session, {})
+        return list(map(lambda rec: GetUser.model_validate(rec), data))
 
 
 @router.get("/friends", response_model=List[Friend], responses=FORBIDDEN | UNAUTHORIZED)

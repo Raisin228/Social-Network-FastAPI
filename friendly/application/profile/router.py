@@ -1,6 +1,8 @@
 from typing import Dict
+from uuid import UUID
 
 import sqlalchemy.exc
+from application.auth.dao import UserDao
 from application.auth.dependensies import get_current_user_access_token
 from application.auth.models import User
 from application.auth.schemas import GetUser
@@ -22,8 +24,16 @@ router = APIRouter(prefix="/profile", tags=["My Profile"])
 
 @router.get("/get_information", response_model=GetUser, responses=FORBIDDEN | UNAUTHORIZED)
 @RedisService.cache_response(ttl=10)
-async def user_profile(_request: Request, user: User = Depends(get_current_user_access_token)):
+async def user_profile(
+    _request: Request,
+    other_usr_id: UUID | None = None,
+    user: User = Depends(get_current_user_access_token),
+):
     """Получить информацию о своём профиле"""
+    if other_usr_id is not None:
+        async with Transaction() as session:
+            data = await UserDao.find_by_filter(session, {"id": other_usr_id})
+            return data
     return user
 
 

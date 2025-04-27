@@ -50,7 +50,24 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
     "/registration", summary="Register new user", responses=CONFLICT, response_model=UserRegister
 )
 async def register_user(user_data: UserRegistrationData):
-    """Регистрация пользователя по логину и паролю"""
+    """
+    Registers a new user in the system.
+
+    ### Request body:
+    - **email**: Email address of the user.
+    - **password**: Password for the account (will be hashed before storing).
+
+    ### Behavior:
+    - Checks if a user with the same email already exists.
+    - If not, creates a new user with a generated UUID and default nickname (`id_<uuid>`).
+    - Sends a welcome email to the provided address.
+
+    ### Responses:
+    - **200**: Account successfully created (returns basic user info).
+    - **409**: Conflict — user with the same email already exists.
+    - **422**: Validation Error - error in validation of input data.
+    """
+
     email = {"email": user_data.email}
 
     async with Transaction() as session:

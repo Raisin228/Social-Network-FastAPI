@@ -8,7 +8,14 @@ from application.news.constants import POST_NOT_FOUND
 from application.news.dao import NewsDao, NewsFilesDao, UserNewsReactionDao
 from application.news.models import ReactionType
 from application.news.request_body import CreateNews
-from application.news.schemas import FullNewsInfo, NewsRemoved, ReactionsByPost
+from application.news.schemas import (
+    FullNewsInfo,
+    NewsInfo,
+    NewsRemoved,
+    PostInformationWithAttachmentsReactions,
+    ReactionsByPost,
+)
+from application.storage.schemas import MinFileInfo
 from database import Transaction
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -81,6 +88,86 @@ async def leave_reaction_under_post(
     return ReactionsByPost(news_id=news_id, total_reactions=all_reactions)
 
 
+# TODO переделать
+@router.get(
+    "/feed/list", response_model=list[NewsInfo], responses=NOT_FOUND | FORBIDDEN | UNAUTHORIZED
+)
+async def get_news_id_list(
+    usr_id: UUID | None = None, user: User = Depends(get_current_user_access_token)
+):
+    res = []
+    search_filter = {"user_id": user.id if usr_id is None else usr_id}
+    async with Transaction() as session:
+        data = await NewsDao.find_by_filter(session, search_filter)
+
+        if data is None:
+            data = []
+        elif isinstance(data, dict):
+            data = [data]
+
+        for rec in data:
+            print(rec, type(rec), data)
+            rec["news_id"] = rec.pop("id")
+            rec["owner_id"] = rec.pop("user_id")
+
+            res.append(NewsInfo.model_validate(rec))
+    return res
+
+
+# TODO: было решено вообще не делать пагинацию в данном методе (на стадии mvp) потому что нормальное
+# внедрение пагинации через cursor потребует слишком большого времени (1) развалятся тесты и все
+# существующие методы
+# Делать временно пагинацию через limit offset нецелесообразно потому что впоследствии она будет
+# удалена
+# Пока данных мало просто делаем получение всех новостей по пользователю и получение всех реакций
+# под каждым конкретным постом -> упаковываем в schema и отдаём в json
+@router.get(
+    "/feed/{news_id}",
+    summary="Full information on a specific news item",
+    responses=NOT_FOUND | FORBIDDEN | UNAUTHORIZED,
+    response_model=PostInformationWithAttachmentsReactions,
+)
+# TODO метод и всё что с ним связано (схемы вызовы) дрянь -> делался на скорую руку ПЕРЕДЕЛАТЬ!!!
+async def specific_news_information(
+    news_id: UUID, user: User = Depends(get_current_user_access_token)
+):
+    async with Transaction() as session:
+        post_body_info = await NewsDao.find_by_filter(session, {"id": news_id}, return_models=True)
+
+        if post_body_info is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=POST_NOT_FOUND)
+
+        reaction_under_post = await UserNewsReactionDao.list_reactions_under_post(
+            session, user.id, news_id
+        )
+
+        files = list(
+            map(
+                lambda file_obj: MinFileInfo.model_validate(
+                    {"file_id": file_obj.id, "link_to_file": file_obj.s3_path}
+                ),
+                post_body_info.attachments,
+            )
+        )
+
+        body = NewsInfo(
+            **{
+                "news_id": post_body_info.id,
+                "topic": post_body_info.topic,
+                "main_text": post_body_info.main_text,
+                "owner_id": post_body_info.user_id,
+                "created_at": post_body_info.created_at,
+                "updated_at": post_body_info.updated_at,
+            }
+        )
+
+        res = PostInformationWithAttachmentsReactions.model_validate(
+            {"post_body": body, "attachments": files, "reactions": reaction_under_post}
+        )
+
+    return res
+
+
 @router.delete(
     "/erase_post/{post_id}",
     responses=NOT_FOUND | FORBIDDEN | UNAUTHORIZED,
@@ -123,3 +210,6 @@ async def destroy_news(post_id: UUID, user: User = Depends(get_current_user_acce
 # todo была какое то предупреждение о закрытии transaction
 # todo думай над оптимизацией базы и запросов (как минимум очень много мест с запросами в цикле)
 # todo нужен метод который позволит удалить реакцию
+
+
+# todo testы для всех методов

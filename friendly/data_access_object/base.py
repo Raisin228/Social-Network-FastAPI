@@ -10,20 +10,23 @@ class BaseDAO:
 
     @classmethod
     async def find_by_filter(
-        cls, session: AsyncSession, find_by: Union[Dict, None] = None
-    ) -> None | Dict | List[Dict]:
+        cls, session: AsyncSession, find_by: Dict, *, return_models: bool = False
+    ) -> None | Dict | model | List[Dict] | List[model]:
         """
         Search for records in the database by filters.
 
         Args:
             session (AsyncSession): The SQLAlchemy async session.
             find_by (Union[Dict, None]): Filters for record search.
+            return_models (bool): If True, return ORM models instead of dicts.
 
         Returns:
             Union[None, Dict, List]:
                 - Method returns None, if nothing was found.
                 - Only one dict, if one record was found.
-                - List of dict, if more than one record was found.
+                - List of dict / model, if more than one record was found.
+
+            Item type depends on `return_models` flag: dicts or model instances.
 
         Raises:
             SQLAlchemyError: If the database operation fails.
@@ -33,9 +36,11 @@ class BaseDAO:
         data = await session.execute(query)
         result = data.scalars().all()
 
+        if not return_models:
+            result = [obj.to_dict() for obj in result]
+
         if len(result) == 0:
             return None
-        result = [obj.to_dict() for obj in result]
         if len(result) == 1:
             return result[0]
         return result

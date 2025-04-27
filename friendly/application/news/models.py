@@ -61,7 +61,9 @@ class Reaction(Base):
 
     id: Mapped[id_pk]
     type: Mapped[ReactionType] = MappedColumn(
-        AlchemyEnum(ReactionType, name="reaction_type_enum"), nullable=False, unique=True
+        AlchemyEnum(ReactionType, name="reaction_type_enum", native_enum=False),
+        nullable=False,
+        unique=True,
     )
     __table_args__ = (
         CheckConstraint(
