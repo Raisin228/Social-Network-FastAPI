@@ -106,7 +106,21 @@ async def register_user(user_data: UserRegistrationData):
 async def login_user(
     user_data: UserRegistrationData, session: AsyncSession = Depends(get_async_session)
 ):
-    """Вход в систему, получение JWT токена и запись его в cookies"""
+    """
+    Authenticate the user with email and password.
+
+    ### Request body:
+    - **user_data** (UserRegistrationData): The user's login credentials (email/password).
+
+    ### Behavior:
+    - Checks the presence of such login in the system and checks passwords
+    - In case of a mismatch, a 401 error is thrown.
+
+    ### Responses:
+    - **200**: authorization is successful (returns access and refresh tokens).
+    - **401**: Unauthorized — incorrect login information or there is no such user.
+    - **422**: Validation Error - error in validation of input data.
+    """
     user = await UserDao.authenticate_user(**user_data.model_dump(), session=session)
     if not user:
         raise HTTPException(
@@ -118,11 +132,28 @@ async def login_user(
 
 @router.post(
     "/refresh_access_token",
+    summary="Issue a new access token using refresh",
     response_model=AccessTokenInfo,
     responses=UNAUTHORIZED | FORBIDDEN,
 )
 async def refresh_jwt(user: GetUser = Depends(get_current_user_refresh_token)):
-    """Получить новый токен доступа"""
+    """
+    Get a new access token using refresh token.
+
+    ### Request body:
+    - It's enough to call this method by passing the refresh token as an authorization.
+    `Authorization: Bearer <your_refresh_token>`
+
+    ### Behavior:
+    - Checks the validity of the refresh token.
+    - Creating a new access token.
+
+    ### Responses:
+    - **200**: Successful — new access token has been received.
+    - **401**: Unauthorized — access tokens are incorrect or too old.
+    - **403**: Forbidden — insufficient access rights. Authorization failed.
+    - **422**: Validation Error - error in validation of input data.
+    """
     data_for_payload = {"user_id": str(user.id)}
     access_token = create_jwt_token(data_for_payload, ACCESS_TOKEN_TYPE)
     return AccessTokenInfo(access_token=access_token, token_type="Bearer")
@@ -130,6 +161,7 @@ async def refresh_jwt(user: GetUser = Depends(get_current_user_refresh_token)):
 
 @router.post(
     "/change_password",
+    summary="Change the account password using the current one",
     response_model=UserUpdatePassword,
     responses=FORBIDDEN | UNAUTHORIZED | BAD_REQUEST,
 )
@@ -138,6 +170,25 @@ async def change_account_password(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(get_current_user_access_token),
 ):
+    """
+    Change the password from the user account.
+
+    ### Request body:
+    - **inform (ModifyPassword)**: the old password and the new one confirmed twice.
+
+    ### Behavior:
+    - The user must be logged in and the old password must be valid.
+    - If successful, the password data is changed.
+    - In case of failure, a 400 error is thrown.
+
+    ### Responses:
+    - **200**: Successful — new password has been successfully set.
+    - **400**: Bad Request — the entered old password does not match the valid one.
+    - **401**: Unauthorized — access tokens are incorrect or too old.
+    - **403**: Forbidden — insufficient access rights. Authorization failed.
+    - **422**: Validation Error - error in validation of input data.
+    """
+
     """Сменить пароль от аккаунта. При условии что пользователь помнит текущий пароль"""
     is_valid = await UserDao.authenticate_user(user.email, inform.current_password, session)
     if not is_valid:
@@ -154,12 +205,29 @@ async def change_account_password(
 
 
 @router.post(
-    "/single_link_to_password_reset", response_model=ResetPasswordByEmail, responses=NOT_FOUND
+    "/single_link_to_password_reset",
+    summary="Change your password via email",
+    response_model=ResetPasswordByEmail,
+    responses=NOT_FOUND,
 )
 async def request_token_to_reset_password(
     reset_mail: Email, request: Request, session: AsyncSession = Depends(get_async_session)
 ):
-    """Забыл пароль? Получить короткоживущую ссылку (на почту) с токеном [для сброса пароля]"""
+    """
+    Forgot your password? Get a short-lived link (to the mail) with a token [to reset the password]
+
+    ### Request body:
+    - **reset_mail (Email)**: mail for receiving mailing lists.
+
+    ### Behavior:
+    - We check that the user with this login is in the system.
+    - Creating and sending a password reset token to the mail.
+
+    ### Responses:
+    - **200**: Successful — new password has been successfully set.
+    - **404**: Not Found — there is no user with this login.
+    - **422**: Validation Error - error in validation of input data.
+    """
     user = await UserDao.find_by_filter(session, {"email": reset_mail.email})
 
     if user is None:
@@ -187,11 +255,18 @@ async def request_token_to_reset_password(
     return ResetPasswordByEmail(**{"email": reset_mail.email})
 
 
-@router.get("/login/via_google", response_model=RedirectUserAuth, status_code=302)
+@router.get(
+    "/login/via_google",
+    summary="Log in via google",
+    response_model=RedirectUserAuth,
+    status_code=302,
+)
 async def redirect_google_auth_server(request: Request):
-    """Перенаправление на авторизационный сервер Google для [входа | регистрации] Friendly
+    """
+    Redirection to the Google authorization server for [login or registration] Friendly
 
-    **Note:** redirect_uri=http://127.0.0.1:8000/auth/callback/google
+    ### Note:
+    - **redirect_uri=**http://127.0.0.1:8000/auth/callback/google
     """
     request_from_swagger = request.headers.get("referer", "")
     if request_from_swagger and request_from_swagger.endswith("/docs"):
@@ -244,11 +319,18 @@ async def auth(request: Request):
     return generate_tokens_pair({"user_id": str(is_user_exist["id"])})
 
 
-@router.get("/login/via_yandex", response_model=RedirectUserAuth, status_code=302)
+@router.get(
+    "/login/via_yandex",
+    summary="Login via Yandex ID",
+    response_model=RedirectUserAuth,
+    status_code=302,
+)
 async def redirect_yandex_auth_server(request: Request):
-    """Перенаправление на авторизационный сервер Яндекс ID для [входа | регистрации] Friendly
+    """
+    Redirection to the Yandex ID authorization server for [login | registration] Friendly
 
-    **Note:** redirect_uri=http://127.0.0.1:8000/auth/callback/yandex
+    ### Note:
+    - **redirect_uri=**http://127.0.0.1:8000/auth/callback/yandex
     """
     request_from_swagger = request.headers.get("referer", "")
     if request_from_swagger and request_from_swagger.endswith("/docs"):
@@ -310,6 +392,7 @@ async def ydex_auth(request: Request):
 
 @router.patch(
     "/replace_existent_password",
+    summary="Reset the password using the link from the email",
     response_model=UserUpdatePassword,
     responses=UNAUTHORIZED | FORBIDDEN,
 )
@@ -318,7 +401,22 @@ async def change_password_by_provided_token(
     session: AsyncSession = Depends(get_async_session),
     user: User = Depends(get_current_user_reset_password_token),
 ):
-    """Изменить пароль пользователя через токен из ссылки"""
+    """
+    Save the new password using the reset password link from the email.
+
+    ### Request body:
+    - **data (NewPassword)**: new pass confirmed twice.
+
+    ### Behavior:
+    - The user is being verified.
+    - Saving a new password.
+
+    ### Responses:
+    - **200**: Successful — new password has been successfully set.
+    - **401**: Unauthorized — access tokens are incorrect or too old.
+    - **403**: Forbidden — insufficient access rights. Authorization failed.
+    - **422**: Validation Error - error in validation of input data.
+    """
     updated_profile = await UserDao.update_row(
         session, {"password": hash_password(data.new_password)}, {"id": str(user.id)}
     )
