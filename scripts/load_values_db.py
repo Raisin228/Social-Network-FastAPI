@@ -9,10 +9,11 @@ from typing import Dict, List
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../")))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../friendly/")))
 
-from database import get_async_session  # noqa
+from database import Base, get_async_session  # noqa
 from sqlalchemy import delete, insert  # noqa
 
-from friendly.application.storage.models import FileType  # noqa
+from friendly.application.news.dao import ReactionDao  # noqa
+from friendly.application.storage.dao import FileTypeDao  # noqa
 
 current_dir: Path = Path(__file__).parent
 path_seed_data: Path = (current_dir / "../seed_data").resolve()
@@ -25,12 +26,12 @@ def read_file(file_path: str) -> List[Dict]:
 
 async def insert_data(fixtures: list, table_name: str) -> None:
     """<Вшиваем> стандартные данные в модель и удаляем предыдущие"""
-    models = {"fileType": FileType}
-    table = models.get(table_name)
+    models = {"fileType": FileTypeDao, "reaction": ReactionDao}
+    table_dao = models.get(table_name)
     async for session in get_async_session():
-        await session.execute(delete(table))
+        await table_dao.delete_by_filter(session, {})
         for item in fixtures:
-            await session.execute(insert(table).values(item))
+            await table_dao.add(session, item)
         await session.commit()
 
 

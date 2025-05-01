@@ -21,7 +21,9 @@ def create_jwt_token(data: dict, token_type: str) -> str:
     payload = data.copy()
     temp = {
         REFRESH_TOKEN_TYPE: timedelta(days=30),
-        ACCESS_TOKEN_TYPE: timedelta(days=30, hours=24),
+        ACCESS_TOKEN_TYPE: timedelta(
+            days=30, hours=24
+        ),  # todo не забудь у acces изменить время жизни
         RESET_PASSWORD_TOKEN_TYPE: timedelta(hours=1),
         ADMIN_PANEL_ACCESS_TOKEN_TYPE: timedelta(minutes=1),
     }

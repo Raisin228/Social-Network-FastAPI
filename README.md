@@ -22,13 +22,17 @@
 `pre-commit run -a`
 
 Вшить стандартные данные в DB  
-`python .\scripts\load_values_db.py`
+`python ./scripts/load_values_db.py`
 
 Запуск Celery Worker (cd friendly)
 `celery -A task_queue.__init__:celery worker --loglevel=INFO --pool=solo`
 Запуск Flower
 `celery -A task_queue.__init__:celery flower --address=127.0.0.1 --port=5555`
 
+Сборка FastAPI приложения   
+`docker build . -t friendly`  
+Запуск контейнера  (файл .env будет лежать на сервере)
+`docker run --env-file .env -p 5050:8000 -it friendly`
 
 Сейчас фокус на постах пользователей.
 Личная страница пользователя с постами посты как отдельный модуль с поддержкой характеристик количество лайков 

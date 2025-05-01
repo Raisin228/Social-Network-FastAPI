@@ -27,8 +27,8 @@ class NewsBodyInfo(BaseModel):
     )
 
 
-class FullNewsInfo(NewsBodyInfo):
-    """Исчерпывающая информация о содержании новости вместе со вложениями"""
+class NewsInfo(NewsBodyInfo):
+    """Все данные из тела поста"""
 
     news_id: UUID = Field(
         description="News unique identifier", examples=["e7e7dc03-25fb-49d4-bceb-9cf871031aea"]
@@ -43,6 +43,11 @@ class FullNewsInfo(NewsBodyInfo):
     updated_at: datetime | None = Field(
         description="Date of last news update", examples=["2025-03-30T15:17:10.093545"]
     )
+
+
+class FullNewsInfo(NewsBodyInfo):
+    """Исчерпывающая информация о содержании новости вместе со вложениями"""
+
     attachments: List[MinFileInfo]
 
 
@@ -54,3 +59,38 @@ class NewsRemoved(NewsBodyInfo):
     deleted_at: datetime = Field(
         description="Time to delete an entry.", examples=["2025-03-30T15:17:10.093545"]
     )
+
+
+class SpecificReaction(BaseModel):
+    """Data on one specific reaction"""
+
+    reaction_id: UUID = Field(
+        description="Unique reaction identifier", examples=["e7e8dc13-25fb-49d4-bceb-9cf871031aea"]
+    )
+    type: str = Field(
+        min_length=3, max_length=20, description="Emoji type", examples=["LIKE", "FIRE"]
+    )
+    emoji: str = Field(description="Emojis to display on the UI", examples=["👍", "🔥"])
+    count: int = Field(description="The number of users who left a reaction", examples=[29])
+    reacted_by_user: bool = Field(
+        description="Has this user left a reaction?", examples=[True, False]
+    )
+
+
+class ReactionsByPost(BaseModel):
+    """All reaction added to the post"""
+
+    news_id: UUID = Field(
+        description="News unique identifier", examples=["e7e7dc03-25fb-49d4-bceb-9cf871031aea"]
+    )
+    total_reactions: List[SpecificReaction] = Field(
+        description="All information about the reactions left"
+    )
+
+
+class PostInformationWithAttachmentsReactions(BaseModel):
+    """Полная информация по посту + вложения и реакции"""
+
+    post_body: NewsInfo
+    attachments: List[MinFileInfo]
+    reactions: List[SpecificReaction]

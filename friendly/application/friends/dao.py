@@ -71,6 +71,8 @@ class FriendDao(BaseDAO):
             .limit(limit)
         )
 
+    # TODO: сделай нормальную пагинацию например через курсор а не просто через limit / offset
+
     @classmethod
     async def friend_request(cls, session: AsyncSession, values: dict) -> model:
         """Создать запрос на дружбу."""
