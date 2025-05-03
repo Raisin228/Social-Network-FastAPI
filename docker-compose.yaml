@@ -1,16 +1,7 @@
 services:
-  app:
-    restart: always
-    build:
-      context: ./
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    ports:
-      - "5050:8000"
-
-  db:
+  postgres-database:
     image: postgres:17.4-bookworm
+    container_name: postgres
     restart: always
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -18,12 +9,60 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
     ports:
       - "5051:${DB_PORT}"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7.4.3-bookworm
+    container_name: redis_db
+    restart: always
+    ports:
+      - "5055:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    restart: always
+    container_name: friendly
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "5050:8000"
+    depends_on:
+      postgres-database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   pgadmin4:
     image: dpage/pgadmin4
+    container_name: pgadmin4
     restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: ${MAIL_USERNAME}
       PGADMIN_DEFAULT_PASSWORD: ${ADMIN_PASSWORD}
     ports:
       - "5052:80"
+    depends_on:
+      postgres-database:
+        condition: service_healthy
+
+  redis_insight:
+    image: redislabs/redisinsight:1.14.0
+    container_name: redis_gui
+    restart: always
+    ports:
+      - "5054:8001"
+    depends_on:
+      redis:
+        condition: service_healthy
+
