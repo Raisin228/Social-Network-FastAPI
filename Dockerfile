@@ -15,10 +15,6 @@ RUN poetry install --no-root
 
 COPY . .
 
-RUN chmod +x prestart.sh
-
 WORKDIR /app/friendly
-
-ENTRYPOINT ["../prestart.sh"]
 
 CMD ["python", "main.py"]

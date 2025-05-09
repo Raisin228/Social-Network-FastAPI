@@ -106,6 +106,7 @@ async def get_news_id_list(
             data = [data]
 
         for rec in data:
+            print(rec, type(rec), data)
             rec["news_id"] = rec.pop("id")
             rec["owner_id"] = rec.pop("user_id")
 
