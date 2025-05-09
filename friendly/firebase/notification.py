@@ -62,7 +62,8 @@ async def get_tokens_and_add_notify(s: Dict, r_id: UUID, title: str, body: str) 
 @celery.task(name="notifications", max_retries=3)
 def prepare_notification(sender: Dict, recipient_id: UUID, header: str, info: str) -> List[str]:
     """Сохранить уведомление в бд + рассылка на все устройства"""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     devices = loop.run_until_complete(get_tokens_and_add_notify(sender, recipient_id, header, info))
 
     id_sent_notif = []

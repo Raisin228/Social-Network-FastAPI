@@ -82,6 +82,8 @@ async def display_users_in_system(_user: User = Depends(get_current_user_access_
 
     async with Transaction() as session:
         data = await UserDao.find_by_filter(session, {})
+        if isinstance(data, dict):  # костыль ! ! !
+            data = [data]
         return list(map(lambda rec: GetUser.model_validate(rec), data))
 
 
