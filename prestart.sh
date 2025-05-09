@@ -2,9 +2,15 @@
 
 set -e
 
-echo "->$ Run migrations . . ."
-
 cd ..
+
+echo "->$ Run data embeddings"
+
+python scripts/load_values_db.py
+
+echo "->$ Data embeddings complited!!"
+
+echo "->$ Run migrations . . ."
 
 alembic upgrade head
 
