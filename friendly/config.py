@@ -8,6 +8,7 @@ DOTENV = os.path.join(os.path.dirname(__file__), "../.env")
 
 
 class Settings(BaseSettings):
+    ADMIN_PASSWORD: str
     DB_HOST: str
     DB_PORT: int
     DB_USER: str
