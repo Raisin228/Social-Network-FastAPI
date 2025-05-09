@@ -128,8 +128,11 @@ celerybeat.pid
 
 # Environments
 .env
+.env.prod
 .venv
 env/
+.env1
+.env2
 venv/
 ENV/
 env.bak/
