@@ -659,3 +659,7 @@ Configuration files:
 - `pyproject.toml` — Black & isort configuration
 - `.pre-commit-config.yaml` — Hook definitions
 - `.coveragerc` — Coverage reporting configuration
+
+---
+
+*Author: [@Raisin228](https://github.com/Raisin228)*
